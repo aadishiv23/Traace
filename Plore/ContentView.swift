@@ -136,12 +136,22 @@ struct SampleView: View {
             }
 
             // Color boxes for mood representation
-            HStack(spacing: 10) {
-                ColorBox(color: .red, text: "Friendly")
-                ColorBox(color: .blue, text: "Professional")
-                ColorBox(color: .green, text: "Concise")
+            HStack(spacing: 5) {
+                ColorBox(
+                    color: .red.opacity(0.8),
+                    text: "Friendly"
+                )
+                ColorBox(color: .blue.opacity(0.8), text: "Office")
+                ColorBox(color: .green.opacity(0.8), text: "Concise")
             }
             .padding(.horizontal)
+            
+            HStack(spacing: 5) {
+                ColorBox(color: .blue.opacity(0.8), text: "Office")
+                ColorBox(color: .green.opacity(0.8), text: "Concise")
+            }
+            .padding(.horizontal)
+            
 
             // "Get Started" Section
             Text("Get Started")
@@ -284,7 +294,7 @@ struct ColorBox: View {
         Text(text)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(RoundedRectangle(cornerRadius: 20).foregroundStyle(color))
+            .background(RoundedRectangle(cornerRadius: 10).foregroundStyle(color))
     }
 }
 
