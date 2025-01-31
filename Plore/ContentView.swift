@@ -11,6 +11,9 @@ import SwiftUI
 /// The main view displaying a Map and handling sheet presentations & navigation.
 /// Ensures that `SampleView` reappears when returning to this screen.
 struct ContentView: View {
+
+    // MARK: Properties
+
     /// Controls when the SampleView sheet is shown
     @State private var showExampleSheet = false
 
@@ -23,12 +26,53 @@ struct ContentView: View {
     /// Tracks if ExampleSheet was dismissed when navigating away
     @State private var wasExampleSheetDismissed = false
 
+    /// The object that interfaces with HealthKit to fetch route data.
+    @ObservedObject var healthKitManager = HealthKitManager()
+
+    // MARK: Body
+
     var body: some View {
         NavigationStack {
             ZStack {
                 // Display a full-screen map
-                Map()
-                    .edgesIgnoringSafeArea(.all)
+                Map {
+                    // 🟦 Walking Routes
+                    ForEach(healthKitManager.walkingRoutes, id: \.self) { route in
+                        let coordinates = route.map(\.coordinate)
+                        let polyline = MKPolyline(
+                            coordinates: coordinates,
+                            count: coordinates.count
+                        )
+
+                        MapPolyline(polyline)
+                            .stroke(Color.blue, lineWidth: 3)
+                    }
+
+                    // 🟥 Running Routes
+                    ForEach(healthKitManager.runningRoutes, id: \.self) { route in
+                        let coordinates = route.map(\.coordinate)
+                        let polyline = MKPolyline(
+                            coordinates: coordinates,
+                            count: coordinates.count
+                        )
+
+                        MapPolyline(polyline)
+                            .stroke(Color.red, lineWidth: 3)
+                    }
+
+                    // 🟩 Cycling Routes
+                    ForEach(healthKitManager.cyclingRoutes, id: \.self) { route in
+                        let coordinates = route.map(\.coordinate)
+                        let polyline = MKPolyline(
+                            coordinates: coordinates,
+                            count: coordinates.count
+                        )
+
+                        MapPolyline(polyline)
+                            .stroke(Color.green, lineWidth: 3)
+                    }
+                }
+                .edgesIgnoringSafeArea(.all)
 
                 // Hidden navigation link to trigger programmatic navigation
                 NavigationLink(
@@ -84,6 +128,16 @@ struct ContentView: View {
                 //                } else {
                 //                    showExampleSheet = true
                 //                }
+                Task(priority: .high) {
+                    await healthKitManager.requestHKPermissions()
+                }
+                healthKitManager.fetchWorkoutRoutes()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { // Wait 5s for routes to load
+                    print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
+                    print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
+                    print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
+                }
             }
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -145,13 +199,12 @@ struct SampleView: View {
                 ColorBox(color: .green.opacity(0.8), text: "Concise")
             }
             .padding(.horizontal)
-            
+
             HStack(spacing: 5) {
                 ColorBox(color: .blue.opacity(0.8), text: "Office")
                 ColorBox(color: .green.opacity(0.8), text: "Concise")
             }
             .padding(.horizontal)
-            
 
             // "Get Started" Section
             Text("Get Started")
