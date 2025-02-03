@@ -7,23 +7,23 @@
 
 import MapKit
 import SwiftUI
+import PhotosUI
 
 /// The main view displaying a Map and handling sheet presentations & navigation.
 /// Ensures that `SampleView` reappears when returning to this screen.
 struct ContentView: View {
-
     // MARK: Properties
 
-    /// Controls when the SampleView sheet is shown
+    /// Controls when the SampleView sheet is shown.
     @State private var showExampleSheet = false
 
-    /// Controls when the OpenAppView sheet is shown
+    /// Controls when the OpenAppView sheet is shown.
     @State private var showOpenAppSheet = false
 
-    /// Controls navigation to the NoteView
+    /// Controls navigation to the NoteView.
     @State private var navigateToNote = false
 
-    /// Tracks if ExampleSheet was dismissed when navigating away
+    /// Tracks if ExampleSheet was dismissed when navigating away.
     @State private var wasExampleSheetDismissed = false
 
     /// The object that interfaces with HealthKit to fetch route data.
@@ -34,7 +34,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Display a full-screen map
+                // Display a full-screen map.
                 Map {
                     // 🟦 Walking Routes
                     ForEach(healthKitManager.walkingRoutes, id: \.self) { route in
@@ -74,7 +74,7 @@ struct ContentView: View {
                 }
                 .edgesIgnoringSafeArea(.all)
 
-                // Hidden navigation link to trigger programmatic navigation
+                // Hidden navigation link for programmatic navigation.
                 NavigationLink(
                     destination: NoteView(),
                     isActive: $navigateToNote
@@ -82,11 +82,11 @@ struct ContentView: View {
                     EmptyView()
                 }
             }
-            // Primary sheet - SampleView
+            // Primary sheet – SampleView.
             .sheet(isPresented: $showExampleSheet) {
                 SampleView(
                     onOpenAppTap: {
-                        // Dismiss SampleView and present OpenAppView
+                        // Dismiss SampleView and present OpenAppView.
                         showExampleSheet = false
                         wasExampleSheetDismissed = true
                         DispatchQueue.main.async {
@@ -94,7 +94,7 @@ struct ContentView: View {
                         }
                     },
                     onNoteTap: {
-                        // Dismiss SampleView and navigate to NoteView
+                        // Dismiss SampleView and navigate to NoteView.
                         showExampleSheet = false
                         wasExampleSheetDismissed = true
                         DispatchQueue.main.async {
@@ -111,29 +111,21 @@ struct ContentView: View {
                 .presentationBackgroundInteraction(.enabled)
                 .interactiveDismissDisabled()
             }
-            // Secondary sheet - OpenAppView
-            // Added onDismiss to re-show the SampleView
+            // Secondary sheet – OpenAppView.
             .sheet(isPresented: $showOpenAppSheet, onDismiss: {
                 showExampleSheet = true
             }) {
                 OpenAppView()
             }
             .onAppear {
-                // Show ExampleSheet again if returning to this view
+                // Show ExampleSheet again if returning to this view.
                 showExampleSheet = true
-                // If you specifically need the wasExampleSheetDismissed logic:
-                //                if wasExampleSheetDismissed {
-                //                    showExampleSheet = true
-                //                    wasExampleSheetDismissed = false
-                //                } else {
-                //                    showExampleSheet = true
-                //                }
                 Task(priority: .high) {
                     await healthKitManager.requestHKPermissions()
                 }
                 healthKitManager.fetchWorkoutRoutes()
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { // Wait 5s for routes to load
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { // Wait 5s for routes to load.
                     print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
                     print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
                     print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
@@ -146,6 +138,7 @@ struct ContentView: View {
 
 // MARK: - SampleView (Main Bottom Sheet)
 
+/// A bottom sheet view that provides several shortcuts and actions.
 struct SampleView: View {
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
@@ -160,7 +153,7 @@ struct SampleView: View {
     var body: some View {
         ScrollView {
             VStack {
-                // Search bar
+                // Search bar.
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.gray.opacity(0.8))
@@ -179,7 +172,7 @@ struct SampleView: View {
                 .padding(.bottom, 20)
             }
 
-            // Horizontal scroll categories
+            // Horizontal scroll categories.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(categories, id: \.0) { category in
@@ -189,7 +182,7 @@ struct SampleView: View {
                 .padding(.horizontal)
             }
 
-            // Color boxes for mood representation
+            // Color boxes for mood representation.
             HStack(spacing: 5) {
                 ColorBox(
                     color: .red.opacity(0.8),
@@ -206,13 +199,13 @@ struct SampleView: View {
             }
             .padding(.horizontal)
 
-            // "Get Started" Section
+            // "Get Started" Section.
             Text("Get Started")
                 .font(.title2.bold())
                 .foregroundStyle(.black)
                 .padding(.horizontal)
 
-            // Shortcuts Grid
+            // Shortcuts Grid.
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
                 ShortcutButton(
                     title: "Open App...",
@@ -249,33 +242,55 @@ struct SampleView: View {
 
 // MARK: - OpenAppView (Second Sheet)
 
+/// A view representing the Open App sheet.
 struct OpenAppView: View {
+    
+    @State private var avatarImage: UIImage?
+    
+    @State private var photosPickerItem: PhotosPickerItem?
+    
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Open App Sheet")
-                .font(.title)
-                .padding()
-
-            Text("Imagine this is where you choose or open an app.")
-                .font(.body)
+        VStack {
+            HStack(spacing: 20) {
+                PhotosPicker(selection: ) {
+                    Image(uiImage: avatarImage ?? UIImage(systemName: "person.circle.fill"))
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(.circle)
+                }
+                
+                
+                VStack(alignment: .leading) {
+                    Text("Test User")
+                        .font(.largeTitle.bold())
+                    
+                    Text("Job Title")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            
+            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.yellow.opacity(0.2))
-        .ignoresSafeArea()
+        .padding(30)
     }
 }
 
 // MARK: - NoteView (Hidden Navigation Bar)
 
+/// A view demonstrating the LigiPhotoPicker API in use.
 struct NoteView: View {
-    var body: some View {
-        VStack {
-            Text("New Note")
-                .font(.largeTitle)
-                .padding()
+    @State private var image: UIImage? = nil
 
-            Text("Type your notes here...")
-                .font(.body)
+    var body: some View {
+        NavigationView {
+            VStack {
+                LigiPhotoPicker(selectedImage: $image, cropShape: .circle) // You can also pass a cropShape parameter here.
+                Spacer()
+            }
+            .navigationTitle("LigiPhotoPicker Demo")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.green.opacity(0.2))
@@ -285,7 +300,7 @@ struct NoteView: View {
 
 // MARK: - Reusable Components
 
-/// A button used in the "Get Started" section
+/// A button used in the "Get Started" section.
 struct ShortcutButton: View {
     let title: String
     let icon: String
@@ -314,14 +329,14 @@ struct ShortcutButton: View {
     }
 }
 
-/// A simple category button
+/// A simple category button.
 struct CategoryButton: View {
     let title: String
     let icon: String
 
     var body: some View {
         Button {
-            // Placeholder action
+            // Placeholder action.
         } label: {
             HStack {
                 Image(systemName: icon)
@@ -338,7 +353,7 @@ struct CategoryButton: View {
     }
 }
 
-/// A color box component
+/// A color box component.
 struct ColorBox: View {
     let color: Color
     let text: String
@@ -353,12 +368,14 @@ struct ColorBox: View {
 
 // MARK: - Custom Sheet Detents
 
+/// A custom sheet detent that is one point less than the maximum.
 struct OneSmallThanMaxDetent: CustomPresentationDetent {
     static func height(in context: Context) -> CGFloat? {
         context.maxDetentValue - 1
     }
 }
 
+/// A compact custom sheet detent.
 struct CompactDetent: CustomPresentationDetent {
     static func height(in context: Context) -> CGFloat? {
         context.maxDetentValue * 0.1
