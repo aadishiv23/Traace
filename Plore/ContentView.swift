@@ -123,7 +123,7 @@ struct ContentView: View {
                 Task(priority: .high) {
                     await healthKitManager.requestHKPermissions()
                 }
-                healthKitManager.fetchWorkoutRoutes()
+                healthKitManager.fetchWorkoutRoutesConcurrently()
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5) { // Wait 5s for routes to load.
                     print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
@@ -251,30 +251,8 @@ struct OpenAppView: View {
     
     var body: some View {
         VStack {
-            HStack(spacing: 20) {
-                PhotosPicker(selection: ) {
-                    Image(uiImage: avatarImage ?? UIImage(systemName: "person.circle.fill"))
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 100, height: 100)
-                        .clipShape(.circle)
-                }
-                
-                
-                VStack(alignment: .leading) {
-                    Text("Test User")
-                        .font(.largeTitle.bold())
-                    
-                    Text("Job Title")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-            
-            Spacer()
+            Text("hello")
         }
-        .padding(30)
     }
 }
 
