@@ -5,10 +5,10 @@
 //  Created by Aadi Shiv Malhotra on 1/30/25.
 //
 
+import CoreData
 import CoreLocation
 import Foundation
 import HealthKit
-import CoreData
 
 class HealthKitManager: ObservableObject {
 
@@ -35,11 +35,75 @@ class HealthKitManager: ObservableObject {
     ///    Otherwise, fetch from HealthKit.
     func loadRoutes() {
         let cdWorkouts = coreDataManager.fetchAllWorkouts()
-        
+
         if !cdWorkouts.isEmpty {
             processCoreDataWorkouts(cdWorkouts)
         } else {
             fetchWorkoutRoutesConcurrently()
+        }
+    }
+
+    func syncData(interval: TimeInterval = 3600) {
+        let lastSyncKey = "lastSyncDate"
+        let lastSync = UserDefaults.standard.object(forKey: lastSyncKey) as? Date ?? .distantPast
+
+        let now = Date()
+
+        guard now.timeIntervalSince(interval) > 3600 {
+            print("[HealthKitManager] syncDate() - Skipping sync as less than one hour has passed since last sync")
+            return
+        }
+
+        Task {
+            let bgContext = coreDataManager.persistenceContainer.newBackgroundContext()
+            bgContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+
+            do {
+                let newWorkouts = fetchWorkouts(since: lastSync)
+
+                if newWorkouts.isEmpty {
+                    print("[HealthKitManager] syncData() - No new workouts find since last interval, returning.")
+                    return
+                }
+
+                print(
+                    "[HealthKitManager] syncData() - Found \(newWorkouts.count) new workouts to sync. Starting background sync..."
+                )
+
+                // Use TaskGroup to fetch concurrently
+                try await withThrowingTaskGroup(of: (HKWorkout, [[CLLocation]].self)) { group in
+                    for workout in newWorkouts {
+                        group.addTask {
+                            let routes = fetchRoutes(for: workout)
+                            return (workout, routes)
+                        }
+                    }
+
+                    for try await (workout, routes) in group {
+                        let cdWorkout = coreDataManager.fetchOrCreateWorkout(from: workout, in: bgContext)
+
+                        for route in routes {
+                            let simplified = simplifyRoute(locations: route, tolerance: 10)
+                            coreDataManager.addRoutePoints(simplified, to: cdWorkout, in: bgContext)
+                        }
+                    }
+                }
+
+                do {
+                    try bgContext.save()
+                } catch {
+                    print("[HealthKitManager] syncData() - Unable to save background context: \(error)")
+                }
+
+                UserDefaults.standard.set(Date(), forKey: "lastSyncDate")
+
+                print("[HealthKitManager] syncData() - ✅ Successfully synced \(newWorkouts.count) new workouts.")
+
+                let mainThreadWorkouts = coreDataManager.fetchAllWorkouts()
+                self.processCoreDataWorkouts(mainThreadWorkouts)
+            } catch {
+                print("[HealthKitManager] syncData() - Failed to sync and fetch new workouts: \(error)")
+            }
         }
     }
 
@@ -87,8 +151,6 @@ class HealthKitManager: ObservableObject {
             }
         }
 
-
-
         DispatchQueue.main.async {
             self.walkingRoutes = walking
             self.runningRoutes = running
@@ -121,8 +183,9 @@ class HealthKitManager: ObservableObject {
                 do {
                     let workouts = try await self.fetchWorkouts(of: type)
                     for workout in workouts {
-                        if (type == .running || type == .walking || type == .cycling),
-                           workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool == true {
+                        if type == .running || type == .walking || type == .cycling,
+                           workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool == true
+                        {
                             continue
                         }
 
@@ -150,6 +213,7 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// Fetches workouts of a particular workout activity type.
     private func fetchWorkouts(of type: HKWorkoutActivityType) async throws -> [HKWorkout] {
         try await withCheckedThrowingContinuation { continuation in
             let predicate = HKQuery.predicateForWorkouts(with: type)
@@ -173,11 +237,37 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// Fetch workouts that have occured prior to the last saved sync.
+    private func fetchWorkouts(since lastSync: Date) async throws -> [HKWorkout] {
+        try await withCheckedThrowingContinuation { continutation in
+            let predicate = HKQuery.predicateForSamples(withStart: lastSync, end: Date(), options: .strictStartDate)
+            let query = HKSampleQuery(
+                sampleType: HKObjectType.workoutType(),
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error {
+                    continutation.resume(throwing: error)
+                    return
+                }
+
+                guard let workouts = samples as? [HKWorkout] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                continutation.resume(returning: workouts)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
     private func fetchRoutes(for workout: HKWorkout) async throws -> [[CLLocation]] {
         try await withCheckedThrowingContinuation { continuation in
             let routeType = HKSeriesType.workoutRoute()
             let predicate = HKQuery.predicateForObjects(from: workout)
-            
+
             let query = HKSampleQuery(
                 sampleType: routeType,
                 predicate: predicate,
@@ -203,7 +293,7 @@ class HealthKitManager: ObservableObject {
     private func loadRoutesData(_ routes: [HKWorkoutRoute], completion: @escaping ([[CLLocation]]) -> Void) {
         var routeLocations: [[CLLocation]] = []
         let group = DispatchGroup()
-        
+
         for route in routes {
             group.enter()
             var locations: [CLLocation] = []
@@ -220,7 +310,7 @@ class HealthKitManager: ObservableObject {
             }
             healthStore.execute(routeQuery)
         }
-        
+
         group.notify(queue: .global()) {
             completion(routeLocations)
         }

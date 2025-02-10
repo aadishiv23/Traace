@@ -142,7 +142,7 @@ struct ContentView: View {
             }
             .onAppear {
                 // Show ExampleSheet again if returning to this view.
-               // CoreDataManager.shared.clearAllData()
+                // CoreDataManager.shared.clearAllData()
 
                 showExampleSheet = true
                 Task(priority: .high) {
@@ -188,30 +188,14 @@ struct SampleView: View {
     var body: some View {
         ScrollView {
             VStack {
+                searchBar
+
                 HStack(spacing: 10) {
                     ToggleButton(title: "Running", color: .red, isOn: $showRunningRoutes)
                     ToggleButton(title: "Walking", color: .blue, isOn: $showWalkingRoutes)
                     ToggleButton(title: "Cycling", color: .green, isOn: $showCyclingRoutes)
                 }
                 .padding()
-
-                // Search bar.
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.gray.opacity(0.8))
-                    Text("Search")
-                        .foregroundStyle(.gray.opacity(0.8))
-                    Spacer()
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .foregroundStyle(.regularMaterial)
-                        .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
-                )
-                .padding(.horizontal)
-                .padding(.top, 25)
-                .padding(.bottom, 20)
             }
 
             // Horizontal scroll categories.
@@ -280,60 +264,27 @@ struct SampleView: View {
             .padding(.horizontal)
         }
     }
-}
 
-// MARK: - OpenAppView (Second Sheet)
+    // MARK: Subviews
 
-/// A view representing the Open App sheet.
-struct OpenAppView: View {
-
-    @State private var avatarImage: UIImage?
-
-    @State private var photosPickerItem: PhotosPickerItem?
-
-    var body: some View {
-        VStack {
-            Text("hello")
+    /// The search bar that in the future will allow users to filter different data values.
+    /// Currently it is a static UI element
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.gray.opacity(0.8))
+            Text("Search")
+                .foregroundStyle(.gray.opacity(0.8))
+            Spacer()
         }
-    }
-}
-
-// MARK: - NoteView (Hidden Navigation Bar)
-
-/// A view demonstrating the LigiPhotoPicker API in use.
-struct NoteView: View {
-    @State private var image: UIImage? = nil
-
-    var body: some View {
-        NavigationView {
-            VStack {
-                LigiPhotoPicker(
-                    selectedImage: $image,
-                    cropShape: .circle
-                ) // You can also pass a cropShape parameter here.
-                Spacer()
-            }
-            .navigationTitle("LigiPhotoPicker Demo")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.green.opacity(0.2))
-        .ignoresSafeArea()
-    }
-}
-
-// MARK: - Custom Sheet Detents
-
-/// A custom sheet detent that is one point less than the maximum.
-struct OneSmallThanMaxDetent: CustomPresentationDetent {
-    static func height(in context: Context) -> CGFloat? {
-        context.maxDetentValue - 1
-    }
-}
-
-/// A compact custom sheet detent.
-struct CompactDetent: CustomPresentationDetent {
-    static func height(in context: Context) -> CGFloat? {
-        context.maxDetentValue * 0.1
+        .padding(.all, 15)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .foregroundStyle(.regularMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+        )
+        .padding(.horizontal)
+        .padding(.vertical, 15)
     }
 }
 

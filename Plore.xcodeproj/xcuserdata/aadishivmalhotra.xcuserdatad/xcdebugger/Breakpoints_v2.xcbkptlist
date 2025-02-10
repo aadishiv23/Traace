@@ -30,9 +30,9 @@
             filePath = "Plore/Managers/HealthKitManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "51"
-            endingLineNumber = "51"
-            landmarkName = "processCoreDataWorkouts(_:)"
+            startingLineNumber = "102"
+            endingLineNumber = "102"
+            landmarkName = "syncData(interval:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
