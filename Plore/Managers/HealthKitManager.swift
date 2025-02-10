@@ -8,136 +8,150 @@
 import CoreLocation
 import Foundation
 import HealthKit
+import CoreData
 
 class HealthKitManager: ObservableObject {
 
     /// Access point for all data manager by Health Kit.
     private let healthStore = HKHealthStore()
 
-    /// The list of routes representing the different walks a user had done.
+    /// Access point for all data in CoreData.
+    private let coreDataManager = CoreDataManager.shared
+
+    /// The list of routes representing the different workouts a user has done.
     @Published var walkingRoutes: [[CLLocation]] = []
     @Published var runningRoutes: [[CLLocation]] = []
     @Published var cyclingRoutes: [[CLLocation]] = []
 
-    /// This function requests the HealthKit permissions from the user.
-    func requestHKPermissions() async {
-        let typesToRequest: Set = [
-            HKObjectType.workoutType(),
-            HKSeriesType.workoutRoute(),
-            HKQuantityType(.activeEnergyBurned),
-            HKQuantityType(.distanceWalkingRunning),
-            HKQuantityType(.heartRate)
-        ]
-
-        do {
-            // Check that Health data is available on the device.
-            if HKHealthStore.isHealthDataAvailable() {
-                // Asynchronously requests access to data
-                try await healthStore.requestAuthorization(toShare: typesToRequest, read: typesToRequest)
-            }
-        } catch {
-            // Typically, authorization requests only fail if you haven't set the
-            // usage and share descriptions in your app's Info.plist, or if
-            // Health data isn't available on the current device.
-            fatalError(
-                "*** An unexpected error occurred while requesting authorization: \(error.localizedDescription) ***"
-            )
+    /// Initializes HealthKitManager and loads routes.
+    init() {
+        Task {
+            await requestHKPermissions()
+            loadRoutes()
         }
     }
 
-    /// [Testing] This function fetches workout and routes async.
-    func fetchWorkoutRoutesConcurrently() {
-        Task(priority: .background) {
-            var walkingResult: [[CLLocation]] = []
-            var runningResult: [[CLLocation]] = []
-            var cyclingResult: [[CLLocation]] = []
+    /// 1) Check Core Data first. If data is present, load it and skip HK if you like.
+    ///    Otherwise, fetch from HealthKit.
+    func loadRoutes() {
+        let cdWorkouts = coreDataManager.fetchAllWorkouts()
+        
+        if !cdWorkouts.isEmpty {
+            processCoreDataWorkouts(cdWorkouts)
+        } else {
+            fetchWorkoutRoutesConcurrently()
+        }
+    }
 
+    private func processCoreDataWorkouts(_ workouts: [CDWorkout]) {
+        var walking = [[CLLocation]]()
+        var running = [[CLLocation]]()
+        var cycling = [[CLLocation]]()
+
+        for cdWorkout in workouts {
+            guard let typeString = cdWorkout.type else {
+                print("❌ Workout type is nil for \(cdWorkout.id ?? "Unknown ID")")
+                continue
+            }
+
+            print("ℹ️ Raw typeString from Core Data:", typeString)
+
+            guard let typeInt = Int(typeString) else {
+                print("❌ Failed to convert typeString to Int:", typeString)
+                continue
+            }
+
+            print("ℹ️ Converting typeInt:", typeInt)
+
+            guard let typeEnum = HKWorkoutActivityType(rawValue: UInt(typeInt)) else {
+                print("❌ Invalid HKWorkoutActivityType rawValue:", typeInt)
+                continue
+            }
+
+            print("✅ Successfully matched type:", typeEnum)
+
+            let points = cdWorkout.routePoints?.allObjects as? [CDRoutePoint] ?? []
+
+            let sortedPoints = points.sorted { ($0.timestamp ?? Date.distantPast) < ($1.timestamp ?? Date.distantPast) }
+            let locations = sortedPoints.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+
+            switch typeEnum {
+            case .walking:
+                walking.append(locations)
+            case .running:
+                running.append(locations)
+            case .cycling:
+                cycling.append(locations)
+            default:
+                break
+            }
+        }
+
+
+
+        DispatchQueue.main.async {
+            self.walkingRoutes = walking
+            self.runningRoutes = running
+            self.cyclingRoutes = cycling
+        }
+    }
+
+    func requestHKPermissions() async {
+        let typesToRequest: Set = [
+            HKObjectType.workoutType(),
+            HKSeriesType.workoutRoute()
+        ]
+        do {
+            if HKHealthStore.isHealthDataAvailable() {
+                try await healthStore.requestAuthorization(toShare: typesToRequest, read: typesToRequest)
+            }
+        } catch {
+            fatalError("*** Error requesting HK authorization: \(error) ***")
+        }
+    }
+
+    func fetchWorkoutRoutesConcurrently() {
+        Task(priority: .high) {
             let workoutTypes: [HKWorkoutActivityType] = [.walking, .running, .cycling]
+
+            let bgContext = coreDataManager.persistenceContainer.newBackgroundContext()
+            bgContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
             for type in workoutTypes {
                 do {
                     let workouts = try await self.fetchWorkouts(of: type)
                     for workout in workouts {
-                        if type == .walking || type == .running,
-                           workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool == true
-                        {
+                        if (type == .running || type == .walking || type == .cycling),
+                           workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool == true {
                             continue
                         }
+
+                        let cdWorkout = coreDataManager.fetchOrCreateWorkout(from: workout, in: bgContext)
                         let routes = try await self.fetchRoutes(for: workout)
+
                         for route in routes {
                             let simplified = simplifyRoute(locations: route, tolerance: 10)
-                            if !simplified.isEmpty {
-                                switch type {
-                                case .walking:
-                                    walkingResult.append(simplified)
-                                case .running:
-                                    runningResult.append(simplified)
-                                case .cycling:
-                                    cyclingResult.append(simplified)
-                                default: break
-                                }
-                            }
+                            coreDataManager.addRoutePoints(simplified, to: cdWorkout, in: bgContext)
                         }
                     }
                 } catch {
-                    print(error)
+                    print("❌ Error fetching \(type) workouts or routes: \(error)")
                 }
             }
 
-            let finalWalkingRoutes = walkingResult
-            let finalRunningRoutes = runningResult
-            let finalCyclingRoutes = cyclingResult
-
-            await MainActor.run {
-                self.walkingRoutes = finalWalkingRoutes
-                self.runningRoutes = finalRunningRoutes
-                self.cyclingRoutes = finalCyclingRoutes
+            do {
+                try bgContext.save()
+            } catch {
+                print("❌ Error saving background context: \(error.localizedDescription)")
             }
+
+            let mainThreadWorkouts = coreDataManager.fetchAllWorkouts()
+            self.processCoreDataWorkouts(mainThreadWorkouts)
         }
     }
 
-    /// This function fetches workouts and routes.
-    func fetchWorkoutRoutes() {
-        let workoutTypes: [HKWorkoutActivityType] = [.walking, .running, .cycling]
-
-        for type in workoutTypes {
-            let predicate = HKQuery.predicateForWorkouts(with: type)
-
-            let query = HKSampleQuery(
-                sampleType: HKObjectType.workoutType(),
-                predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: nil
-            ) { _, samples, error in
-                guard let workouts = samples as? [HKWorkout], error == nil else {
-                    print("Error fetching workouts: \(error?.localizedDescription ?? "Unknown error")")
-                    return
-                }
-
-                print("Found \(workouts.count) \(type) workouts.")
-
-                for workout in workouts {
-                    // Filter out indoor workouts
-                    if workout.workoutActivityType == .running || workout.workoutActivityType == .cycling {
-                        if workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool == true {
-                            print("Skipping indoor \(type) workout at \(workout.startDate)")
-                            continue
-                        }
-                    }
-
-                    self.fetchWorkoutRoute(for: workout, type: type)
-                }
-            }
-
-            healthStore.execute(query)
-        }
-    }
-
-    // MARK: Private Methods
-
-    /// Asynchronously fetch an array of HKWorkouts for a specific activity type.
     private func fetchWorkouts(of type: HKWorkoutActivityType) async throws -> [HKWorkout] {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[HKWorkout], Error>) in
+        try await withCheckedThrowingContinuation { continuation in
             let predicate = HKQuery.predicateForWorkouts(with: type)
             let query = HKSampleQuery(
                 sampleType: HKObjectType.workoutType(),
@@ -159,72 +173,11 @@ class HealthKitManager: ObservableObject {
         }
     }
 
-    private func loadRouteData(_ route: HKWorkoutRoute, type: HKWorkoutActivityType) {
-        var locations: [CLLocation] = []
-
-        let query = HKWorkoutRouteQuery(route: route) { _, routeData, done, error in
-            guard let routeData, error == nil else {
-                print("Error fetching route data: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-            locations.append(contentsOf: routeData)
-
-            if done {
-                DispatchQueue.main.async {
-                    print("✅ Route for \(type) has \(locations.count) locations.")
-
-                    if locations.isEmpty {
-                        print("⚠️ Skipping empty route for \(type)")
-                        return
-                    }
-
-                    switch type {
-                    case .walking:
-                        self.walkingRoutes.append(locations)
-                    case .running:
-                        self.runningRoutes.append(locations)
-                    case .cycling:
-                        self.cyclingRoutes.append(locations)
-                    default:
-                        break
-                    }
-                    print("✅ Stored \(locations.count) locations in \(type) routes.")
-                }
-            }
-        }
-        healthStore.execute(query)
-    }
-
-    private func fetchWorkoutRoute(for workout: HKWorkout, type: HKWorkoutActivityType) {
-        let routeType = HKSeriesType.workoutRoute()
-        let predicate = HKQuery.predicateForObjects(from: workout)
-
-        let query = HKSampleQuery(
-            sampleType: routeType,
-            predicate: predicate,
-            limit: HKObjectQueryNoLimit,
-            sortDescriptors: nil
-        ) { _, samples, error in
-            guard let routes = samples as? [HKWorkoutRoute], error == nil else {
-                return
-            }
-
-            print("Found \(routes.count) routes for \(type) workout at \(workout.startDate)")
-
-            for route in routes {
-                self.loadRouteData(route, type: type)
-            }
-        }
-
-        healthStore.execute(query)
-    }
-
-    /// Asynchronously fetch all the HKWorkoutRoutes for a given workout, returning an array of arrays of CLLocation.
     private func fetchRoutes(for workout: HKWorkout) async throws -> [[CLLocation]] {
         try await withCheckedThrowingContinuation { continuation in
             let routeType = HKSeriesType.workoutRoute()
             let predicate = HKQuery.predicateForObjects(from: workout)
-
+            
             let query = HKSampleQuery(
                 sampleType: routeType,
                 predicate: predicate,
@@ -239,7 +192,6 @@ class HealthKitManager: ObservableObject {
                     continuation.resume(returning: [])
                     return
                 }
-                // For each HKWorkoutRoute, we need to read out the actual CLLocation data.
                 self.loadRoutesData(routes) { locationsArrays in
                     continuation.resume(returning: locationsArrays)
                 }
@@ -248,21 +200,19 @@ class HealthKitManager: ObservableObject {
         }
     }
 
-    /// Helper to load location data from multiple HKWorkoutRoutes asynchronously.
     private func loadRoutesData(_ routes: [HKWorkoutRoute], completion: @escaping ([[CLLocation]]) -> Void) {
         var routeLocations: [[CLLocation]] = []
         let group = DispatchGroup()
-
+        
         for route in routes {
             group.enter()
             var locations: [CLLocation] = []
             let routeQuery = HKWorkoutRouteQuery(route: route) { _, newData, done, error in
                 if let error {
-                    print("Error fetching route data: \(error.localizedDescription)")
+                    print("❌ Route data error: \(error.localizedDescription)")
                 } else if let newData {
                     locations.append(contentsOf: newData)
                 }
-
                 if done {
                     routeLocations.append(locations)
                     group.leave()
@@ -270,15 +220,12 @@ class HealthKitManager: ObservableObject {
             }
             healthStore.execute(routeQuery)
         }
-
-        // When all routes have been processed, call completion.
+        
         group.notify(queue: .global()) {
             completion(routeLocations)
         }
     }
 
-    /// Removes points that are too close to the last accepted point.
-    /// This greatly reduces the strain when rendering on the map.
     func simplifyRoute(locations: [CLLocation], tolerance: CLLocationDistance = 10) -> [CLLocation] {
         guard let first = locations.first else {
             return []

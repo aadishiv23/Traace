@@ -6,8 +6,8 @@
 //
 
 import MapKit
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 /// The main view displaying a Map and handling sheet presentations & navigation.
 /// Ensures that `SampleView` reappears when returning to this screen.
@@ -26,6 +26,15 @@ struct ContentView: View {
     /// Tracks if ExampleSheet was dismissed when navigating away.
     @State private var wasExampleSheetDismissed = false
 
+    /// Tracks if walking routes should be shown.
+    @State private var showWalkingRoutes = true
+
+    /// Tracks if running routes should be shown.
+    @State private var showRunningRoutes = true
+
+    /// Tracks if cycling routes should be shown
+    @State private var showCyclingRoutes = true
+
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager = HealthKitManager()
 
@@ -34,42 +43,53 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Display a full-screen map.
                 Map {
                     // 🟦 Walking Routes
-                    ForEach(healthKitManager.walkingRoutes, id: \.self) { route in
-                        let coordinates = route.map(\.coordinate)
-                        let polyline = MKPolyline(
-                            coordinates: coordinates,
-                            count: coordinates.count
-                        )
+                    if showWalkingRoutes {
+                        ForEach(healthKitManager.walkingRoutes, id: \.self) { route in
+                            let coordinates = route.map(\.coordinate)
+                            let polyline = MKPolyline(
+                                coordinates: coordinates,
+                                count: coordinates.count
+                            )
 
-                        MapPolyline(polyline)
-                            .stroke(Color.blue, lineWidth: 3)
+                            withAnimation {
+                                MapPolyline(polyline)
+                                    .stroke(Color.blue, lineWidth: 3)
+                            }
+                        }
                     }
 
                     // 🟥 Running Routes
-                    ForEach(healthKitManager.runningRoutes, id: \.self) { route in
-                        let coordinates = route.map(\.coordinate)
-                        let polyline = MKPolyline(
-                            coordinates: coordinates,
-                            count: coordinates.count
-                        )
+                    if showRunningRoutes {
+                        ForEach(healthKitManager.runningRoutes, id: \.self) { route in
+                            let coordinates = route.map(\.coordinate)
+                            let polyline = MKPolyline(
+                                coordinates: coordinates,
+                                count: coordinates.count
+                            )
 
-                        MapPolyline(polyline)
-                            .stroke(Color.red, lineWidth: 3)
+                            withAnimation {
+                                MapPolyline(polyline)
+                                    .stroke(Color.red, lineWidth: 3)
+                            }
+                        }
                     }
 
                     // 🟩 Cycling Routes
-                    ForEach(healthKitManager.cyclingRoutes, id: \.self) { route in
-                        let coordinates = route.map(\.coordinate)
-                        let polyline = MKPolyline(
-                            coordinates: coordinates,
-                            count: coordinates.count
-                        )
+                    if showCyclingRoutes {
+                        ForEach(healthKitManager.cyclingRoutes, id: \.self) { route in
+                            let coordinates = route.map(\.coordinate)
+                            let polyline = MKPolyline(
+                                coordinates: coordinates,
+                                count: coordinates.count
+                            )
 
-                        MapPolyline(polyline)
-                            .stroke(Color.green, lineWidth: 3)
+                            withAnimation {
+                                MapPolyline(polyline)
+                                    .stroke(Color.green, lineWidth: 3)
+                            }
+                        }
                     }
                 }
                 .edgesIgnoringSafeArea(.all)
@@ -85,6 +105,9 @@ struct ContentView: View {
             // Primary sheet – SampleView.
             .sheet(isPresented: $showExampleSheet) {
                 SampleView(
+                    showWalkingRoutes: $showWalkingRoutes,
+                    showRunningRoutes: $showRunningRoutes,
+                    showCyclingRoutes: $showCyclingRoutes,
                     onOpenAppTap: {
                         // Dismiss SampleView and present OpenAppView.
                         showExampleSheet = false
@@ -119,13 +142,15 @@ struct ContentView: View {
             }
             .onAppear {
                 // Show ExampleSheet again if returning to this view.
+               // CoreDataManager.shared.clearAllData()
+
                 showExampleSheet = true
                 Task(priority: .high) {
                     await healthKitManager.requestHKPermissions()
                 }
-                healthKitManager.fetchWorkoutRoutesConcurrently()
+                healthKitManager.loadRoutes()
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { // Wait 5s for routes to load.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) { // Wait 5s for routes to load.
                     print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
                     print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
                     print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
@@ -140,6 +165,16 @@ struct ContentView: View {
 
 /// A bottom sheet view that provides several shortcuts and actions.
 struct SampleView: View {
+
+    /// Bindings that toggle whether walking routes should be shown.
+    @Binding var showWalkingRoutes: Bool
+
+    /// Bindings that toggle whether running routes should be shown.
+    @Binding var showRunningRoutes: Bool
+
+    /// Bindings that toggle whether cycling routes should be shown.
+    @Binding var showCyclingRoutes: Bool
+
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
 
@@ -153,6 +188,13 @@ struct SampleView: View {
     var body: some View {
         ScrollView {
             VStack {
+                HStack(spacing: 10) {
+                    ToggleButton(title: "Running", color: .red, isOn: $showRunningRoutes)
+                    ToggleButton(title: "Walking", color: .blue, isOn: $showWalkingRoutes)
+                    ToggleButton(title: "Cycling", color: .green, isOn: $showCyclingRoutes)
+                }
+                .padding()
+
                 // Search bar.
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -244,11 +286,11 @@ struct SampleView: View {
 
 /// A view representing the Open App sheet.
 struct OpenAppView: View {
-    
+
     @State private var avatarImage: UIImage?
-    
+
     @State private var photosPickerItem: PhotosPickerItem?
-    
+
     var body: some View {
         VStack {
             Text("hello")
@@ -265,7 +307,10 @@ struct NoteView: View {
     var body: some View {
         NavigationView {
             VStack {
-                LigiPhotoPicker(selectedImage: $image, cropShape: .circle) // You can also pass a cropShape parameter here.
+                LigiPhotoPicker(
+                    selectedImage: $image,
+                    cropShape: .circle
+                ) // You can also pass a cropShape parameter here.
                 Spacer()
             }
             .navigationTitle("LigiPhotoPicker Demo")
@@ -273,74 +318,6 @@ struct NoteView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.green.opacity(0.2))
         .ignoresSafeArea()
-    }
-}
-
-// MARK: - Reusable Components
-
-/// A button used in the "Get Started" section.
-struct ShortcutButton: View {
-    let title: String
-    let icon: String
-    let gradient: Gradient
-    var action: (() -> Void)? = nil
-
-    var body: some View {
-        Button(action: { action?() }) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(.white)
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.white)
-                Spacer()
-            }
-            .padding()
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(LinearGradient(gradient: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-            )
-        }
-    }
-}
-
-/// A simple category button.
-struct CategoryButton: View {
-    let title: String
-    let icon: String
-
-    var body: some View {
-        Button {
-            // Placeholder action.
-        } label: {
-            HStack {
-                Image(systemName: icon)
-                Text(title)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .foregroundStyle(.gray.opacity(0.2))
-            )
-        }
-        .foregroundStyle(.blue)
-    }
-}
-
-/// A color box component.
-struct ColorBox: View {
-    let color: Color
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(RoundedRectangle(cornerRadius: 10).foregroundStyle(color))
     }
 }
 
