@@ -49,7 +49,7 @@ class HealthKitManager: ObservableObject {
 
         let now = Date()
 
-        guard now.timeIntervalSince(interval) > 3600 {
+        guard now.timeIntervalSince(lastSync) > 3600 else {
             print("[HealthKitManager] syncDate() - Skipping sync as less than one hour has passed since last sync")
             return
         }
@@ -59,7 +59,7 @@ class HealthKitManager: ObservableObject {
             bgContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
             do {
-                let newWorkouts = fetchWorkouts(since: lastSync)
+                let newWorkouts = try await fetchWorkouts(since: lastSync)
 
                 if newWorkouts.isEmpty {
                     print("[HealthKitManager] syncData() - No new workouts find since last interval, returning.")
@@ -71,10 +71,10 @@ class HealthKitManager: ObservableObject {
                 )
 
                 // Use TaskGroup to fetch concurrently
-                try await withThrowingTaskGroup(of: (HKWorkout, [[CLLocation]].self)) { group in
+                try await withThrowingTaskGroup(of: (HKWorkout, [[CLLocation]]).self) { group in
                     for workout in newWorkouts {
                         group.addTask {
-                            let routes = fetchRoutes(for: workout)
+                            let routes = try await self.fetchRoutes(for: workout)
                             return (workout, routes)
                         }
                     }
@@ -239,7 +239,7 @@ class HealthKitManager: ObservableObject {
 
     /// Fetch workouts that have occured prior to the last saved sync.
     private func fetchWorkouts(since lastSync: Date) async throws -> [HKWorkout] {
-        try await withCheckedThrowingContinuation { continutation in
+        try await withCheckedThrowingContinuation { continuation in
             let predicate = HKQuery.predicateForSamples(withStart: lastSync, end: Date(), options: .strictStartDate)
             let query = HKSampleQuery(
                 sampleType: HKObjectType.workoutType(),
@@ -248,7 +248,7 @@ class HealthKitManager: ObservableObject {
                 sortDescriptors: nil
             ) { _, samples, error in
                 if let error {
-                    continutation.resume(throwing: error)
+                    continuation.resume(throwing: error)
                     return
                 }
 
@@ -256,7 +256,7 @@ class HealthKitManager: ObservableObject {
                     continuation.resume(returning: [])
                     return
                 }
-                continutation.resume(returning: workouts)
+                continuation.resume(returning: workouts)
             }
 
             healthStore.execute(query)

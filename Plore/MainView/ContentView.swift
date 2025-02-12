@@ -35,6 +35,9 @@ struct ContentView: View {
     /// Tracks if cycling routes should be shown
     @State private var showCyclingRoutes = true
 
+    /// Track the user's selected time interval.
+    @State private var selectedSyncInterval: TimeInterval = 3600
+
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager = HealthKitManager()
 
@@ -166,6 +169,15 @@ struct ContentView: View {
 /// A bottom sheet view that provides several shortcuts and actions.
 struct SampleView: View {
 
+    /// Track the user's selected time interval.
+    @State private var selectedSyncInterval: TimeInterval = 3600
+
+    /// The search text.
+    @State private var searchText: String = ""
+
+    /// The object that interfaces with HealthKit to fetch route data.
+    @ObservedObject var healthKitManager = HealthKitManager()
+
     /// Bindings that toggle whether walking routes should be shown.
     @Binding var showWalkingRoutes: Bool
 
@@ -185,10 +197,35 @@ struct SampleView: View {
         ("More", "ellipsis")
     ]
 
+    let sampleData = ["Running Route", "Walking Route", "Cycling Route"] // Placeholder data
+
+    var filteredItems: [String] {
+        searchText.isEmpty ? sampleData : sampleData.filter { $0.localizedCaseInsensitiveContains(searchText) }
+    }
+
     var body: some View {
         ScrollView {
             VStack {
-                searchBar
+                SearchBarView(searchText: $searchText)
+
+                VStack {
+                    Text("Sync Frequency")
+                        .font(.headline)
+
+                    Picker("Sync Interval", selection: $selectedSyncInterval) {
+                        Text("Every 30 min").tag(30.0)
+                        Text("Every Hour").tag(60.0)
+                        Text("Every 2 Hours").tag(120.0)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
+
+                    Button("Sync Now") {
+                        healthKitManager.syncData(interval: selectedSyncInterval)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding()
+                }
 
                 HStack(spacing: 10) {
                     ToggleButton(title: "Running", color: .red, isOn: $showRunningRoutes)
@@ -208,28 +245,22 @@ struct SampleView: View {
                 .padding(.horizontal)
             }
 
-            // Color boxes for mood representation.
-            HStack(spacing: 5) {
-                ColorBox(
-                    color: .red.opacity(0.8),
-                    text: "Friendly"
-                )
-                ColorBox(color: .blue.opacity(0.8), text: "Office")
-                ColorBox(color: .green.opacity(0.8), text: "Concise")
+            VStack {
+                // List of Filtered Items
+                if !filteredItems.isEmpty {
+                    ForEach(filteredItems, id: \.self) { item in
+                        Text(item)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray5)))
+                            .padding(.horizontal)
+                    }
+                } else {
+                    Text("No results found")
+                        .foregroundColor(.gray)
+                        .padding()
+                }
             }
-            .padding(.horizontal)
-
-            HStack(spacing: 5) {
-                ColorBox(color: .blue.opacity(0.8), text: "Office")
-                ColorBox(color: .green.opacity(0.8), text: "Concise")
-            }
-            .padding(.horizontal)
-
-            // "Get Started" Section.
-            Text("Get Started")
-                .font(.title2.bold())
-                .foregroundStyle(.black)
-                .padding(.horizontal)
 
             // Shortcuts Grid.
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
