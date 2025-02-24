@@ -63,6 +63,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AC7A3B352D6CF26500AB7BCF /* Layers */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Layers; path = ../Layers; sourceTree = SOURCE_ROOT; };
 		ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PloreTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -153,6 +154,7 @@
 		ACD046A42D4A88EF002A2E77 = {
 			isa = PBXGroup;
 			children = (
+				AC7A3B352D6CF26500AB7BCF /* Layers */,
 				ACD046AF2D4A88EF002A2E77 /* Plore */,
 				ACD046C02D4A88F1002A2E77 /* PloreTests */,
 				ACD046CA2D4A88F1002A2E77 /* PloreUITests */,

@@ -22,6 +22,8 @@ struct ContentView: View {
 
     /// Controls navigation to the NoteView.
     @State private var navigateToNote = false
+    
+    @State private var navigateToPetal = false
 
     /// Tracks if ExampleSheet was dismissed when navigating away.
     @State private var wasExampleSheetDismissed = false
@@ -99,8 +101,15 @@ struct ContentView: View {
 
                 // Hidden navigation link for programmatic navigation.
                 NavigationLink(
-                    destination: NoteView(),
+                    destination: OpenAppView(),
                     isActive: $navigateToNote
+                ) {
+                    EmptyView()
+                }
+                
+                NavigationLink(
+                    destination: PetalAssistantView(),
+                    isActive: $navigateToPetal
                 ) {
                     EmptyView()
                 }
@@ -125,6 +134,13 @@ struct ContentView: View {
                         wasExampleSheetDismissed = true
                         DispatchQueue.main.async {
                             navigateToNote = true
+                        }
+                    },
+                    onPetalTap: {
+                        showExampleSheet = false
+                        wasExampleSheetDismissed = true
+                        Task { @MainActor in
+                            navigateToPetal = true
                         }
                     }
                 )
@@ -189,6 +205,7 @@ struct SampleView: View {
 
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
+    let onPetalTap: () -> Void
 
     let categories = [
         ("Scripting", "wand.and.stars"),
@@ -273,7 +290,8 @@ struct SampleView: View {
                 ShortcutButton(
                     title: "Call Favorites",
                     icon: "phone.fill",
-                    gradient: Gradient(colors: [.green, .mint])
+                    gradient: Gradient(colors: [.green, .mint]),
+                    action: onPetalTap
                 )
                 ShortcutButton(
                     title: "Recently Played",
