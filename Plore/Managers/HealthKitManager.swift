@@ -9,6 +9,7 @@ import CoreData
 import CoreLocation
 import Foundation
 import HealthKit
+import MapKit
 
 class HealthKitManager: ObservableObject {
 
@@ -22,6 +23,11 @@ class HealthKitManager: ObservableObject {
     @Published var walkingRoutes: [[CLLocation]] = []
     @Published var runningRoutes: [[CLLocation]] = []
     @Published var cyclingRoutes: [[CLLocation]] = []
+
+    /// Cached polylines.
+    @Published var walkingPolylines: [MKPolyline] = []
+    @Published var runningPolylines: [MKPolyline] = []
+    @Published var cyclingPolylines: [MKPolyline] = []
 
     /// Initializes HealthKitManager and loads routes.
     init() {
@@ -40,6 +46,40 @@ class HealthKitManager: ObservableObject {
             processCoreDataWorkouts(cdWorkouts)
         } else {
             fetchWorkoutRoutesConcurrently()
+        }
+    }
+
+    // MARK: - Polyline
+
+    func computePolylines() async {
+        
+        async let walkingPolylines = Task.detached(priority: .userInitiated) {
+            self.walkingRoutes.map { route in
+                let coordinates = route.map(\.coordinate)
+                return MKPolyline(coordinates: coordinates, count: coordinates.count)
+            }
+        }.value
+        
+        async let runningPolylines = Task.detached(priority: .userInitiated) {
+            self.runningRoutes.map { route in
+                let coordinates = route.map(\.coordinate)
+                return MKPolyline(coordinates: coordinates, count: coordinates.count)
+            }
+        }.value
+        
+        async let cyclingPolylines = Task.detached(priority: .userInitiated) {
+            self.cyclingRoutes.map { route in
+                let coordinates = route.map(\.coordinate)
+                return MKPolyline(coordinates: coordinates, count: coordinates.count)
+            }
+        }.value
+        
+        let (walkingPolys, runningPolys, cyclingPolys) = await (walkingPolylines, runningPolylines, cyclingPolylines)
+        
+        Task { @MainActor in
+            self.walkingPolylines = walkingPolys
+            self.runningPolylines = runningPolys
+            self.cyclingPolylines = cyclingPolys
         }
     }
 
@@ -151,10 +191,12 @@ class HealthKitManager: ObservableObject {
             }
         }
 
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.walkingRoutes = walking
             self.runningRoutes = running
             self.cyclingRoutes = cycling
+
+            await self.computePolylines()
         }
     }
 

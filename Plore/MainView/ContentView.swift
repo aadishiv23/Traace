@@ -22,7 +22,7 @@ struct ContentView: View {
 
     /// Controls navigation to the NoteView.
     @State private var navigateToNote = false
-    
+
     @State private var navigateToPetal = false
 
     /// Tracks if ExampleSheet was dismissed when navigating away.
@@ -51,49 +51,25 @@ struct ContentView: View {
                 Map {
                     // 🟦 Walking Routes
                     if showWalkingRoutes {
-                        ForEach(healthKitManager.walkingRoutes, id: \.self) { route in
-                            let coordinates = route.map(\.coordinate)
-                            let polyline = MKPolyline(
-                                coordinates: coordinates,
-                                count: coordinates.count
-                            )
-
-                            withAnimation {
-                                MapPolyline(polyline)
-                                    .stroke(Color.blue, lineWidth: 3)
-                            }
+                        ForEach(healthKitManager.walkingPolylines, id: \.self) { polyline in
+                            MapPolyline(polyline)
+                                .stroke(Color.blue, lineWidth: 3)
                         }
                     }
 
                     // 🟥 Running Routes
                     if showRunningRoutes {
-                        ForEach(healthKitManager.runningRoutes, id: \.self) { route in
-                            let coordinates = route.map(\.coordinate)
-                            let polyline = MKPolyline(
-                                coordinates: coordinates,
-                                count: coordinates.count
-                            )
-
-                            withAnimation {
-                                MapPolyline(polyline)
-                                    .stroke(Color.red, lineWidth: 3)
-                            }
+                        ForEach(healthKitManager.runningPolylines, id: \.self) { polyline in
+                            MapPolyline(polyline)
+                                .stroke(Color.red, lineWidth: 3)
                         }
                     }
 
                     // 🟩 Cycling Routes
                     if showCyclingRoutes {
-                        ForEach(healthKitManager.cyclingRoutes, id: \.self) { route in
-                            let coordinates = route.map(\.coordinate)
-                            let polyline = MKPolyline(
-                                coordinates: coordinates,
-                                count: coordinates.count
-                            )
-
-                            withAnimation {
-                                MapPolyline(polyline)
-                                    .stroke(Color.green, lineWidth: 3)
-                            }
+                        ForEach(healthKitManager.cyclingPolylines, id: \.self) { polyline in
+                            MapPolyline(polyline)
+                                .stroke(Color.green, lineWidth: 3)
                         }
                     }
                 }
@@ -106,7 +82,7 @@ struct ContentView: View {
                 ) {
                     EmptyView()
                 }
-                
+
                 NavigationLink(
                     destination: PetalAssistantView(),
                     isActive: $navigateToPetal
@@ -186,63 +162,63 @@ struct ContentView: View {
 /// A bottom sheet view with tabs and improved UI using ClaudeButton components.
 struct SampleView: View {
     // MARK: - Properties
-    
+
     /// Track the user's selected time interval.
     @State private var selectedSyncInterval: TimeInterval = 3600
-    
+
     /// The search text.
     @State private var searchText: String = ""
-    
+
     /// The currently selected tab.
     @State private var selectedTab: TabSection = .routes
-    
+
     /// Indicates if sync is in progress
     @State private var isSyncing = false
-    
+
     /// Last sync time
     @State private var lastSyncTime: Date? = nil
-    
+
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager: HealthKitManager
-    
+
     /// Bindings that toggle whether walking routes should be shown.
     @Binding var showWalkingRoutes: Bool
-    
+
     /// Bindings that toggle whether running routes should be shown.
     @Binding var showRunningRoutes: Bool
-    
+
     /// Bindings that toggle whether cycling routes should be shown.
     @Binding var showCyclingRoutes: Bool
-    
+
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
     let onPetalTap: () -> Void
-    
+
     let sampleData = ["Running Route", "Walking Route", "Cycling Route"] // Placeholder data
-    
-    // Tab sections
+
+    /// Tab sections
     enum TabSection: String, CaseIterable {
         case routes = "Routes"
         case shortcuts = "Shortcuts"
         case explore = "Explore"
         case settings = "Settings"
-        
+
         var icon: String {
             switch self {
-            case .routes: return "map"
-            case .shortcuts: return "square.grid.2x2"
-            case .explore: return "safari"
-            case .settings: return "gear"
+            case .routes: "map"
+            case .shortcuts: "square.grid.2x2"
+            case .explore: "safari"
+            case .settings: "gear"
             }
         }
     }
-    
+
     var filteredItems: [String] {
         searchText.isEmpty ? sampleData : sampleData.filter { $0.localizedCaseInsensitiveContains(searchText) }
     }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         VStack(spacing: 0) {
             searchBarSection
@@ -299,25 +275,24 @@ struct SampleView: View {
             .padding(.vertical, 8)
         }
         .background(
-            selectedTab == tab ?
-                Color.blue.opacity(0.1) :
-                Color.clear
+            selectedTab == tab
+                ? Color.blue.opacity(0.1)
+                : Color.clear
         )
     }
 
-    
     // MARK: - Tab Contents
-    
+
     /// Routes tab content
     private var routesTabContent: some View {
         ScrollView {
             VStack(spacing: 16) {
                 // Sync status section
                 syncStatusSection
-                
+
                 // Route toggles
                 routeToggleSection
-                
+
                 // Route list
                 routeListSection
             }
@@ -325,7 +300,7 @@ struct SampleView: View {
             .padding(.top, 16)
         }
     }
-    
+
     /// Shortcuts tab content
     private var shortcutsTabContent: some View {
         ScrollView {
@@ -367,25 +342,28 @@ struct SampleView: View {
                     )
                 }
                 .padding(.top, 8)
-                
+
                 // Quick actions section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Quick Actions")
                         .font(.headline)
                         .padding(.leading, 4)
-                    
+
                     VStack(spacing: 12) {
-                        ForEach(["Check Weather", "Track Package", "Start Workout", "Find Transit"], id: \.self) { action in
+                        ForEach(
+                            ["Check Weather", "Track Package", "Start Workout", "Find Transit"],
+                            id: \.self
+                        ) { action in
                             HStack {
                                 Image(systemName: iconForAction(action))
                                     .frame(width: 24, height: 24)
                                     .foregroundColor(.blue)
-                                
+
                                 Text(action)
                                     .font(.system(size: 16, weight: .medium))
-                                
+
                                 Spacer()
-                                
+
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(.gray)
@@ -405,7 +383,7 @@ struct SampleView: View {
             .padding(.top, 8)
         }
     }
-    
+
     /// Explore tab content
     private var exploreTabContent: some View {
         ScrollView {
@@ -414,7 +392,7 @@ struct SampleView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Explore Nearby")
                         .font(.headline)
-                    
+
                     // Cards for nearby locations
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
@@ -428,7 +406,7 @@ struct SampleView: View {
                                                 .font(.system(size: 30))
                                                 .foregroundColor(.white)
                                         )
-                                    
+
                                     Text(category)
                                         .font(.system(size: 14, weight: .medium))
                                         .padding(.top, 4)
@@ -438,24 +416,24 @@ struct SampleView: View {
                         .padding(.bottom, 8)
                     }
                 }
-                
+
                 // Recent locations
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Recent Locations")
                         .font(.headline)
-                    
+
                     VStack(spacing: 12) {
                         ForEach(["Home", "Work", "Gym", "Coffee Shop"], id: \.self) { location in
                             HStack {
                                 Image(systemName: iconForLocation(location))
                                     .frame(width: 24, height: 24)
                                     .foregroundColor(.blue)
-                                
+
                                 Text(location)
                                     .font(.system(size: 16, weight: .medium))
-                                
+
                                 Spacer()
-                                
+
                                 Text("Navigate")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.blue)
@@ -474,7 +452,7 @@ struct SampleView: View {
             .padding(.top, 16)
         }
     }
-    
+
     /// Settings tab content
     private var settingsTabContent: some View {
         ScrollView {
@@ -483,14 +461,14 @@ struct SampleView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Sync Settings")
                         .font(.headline)
-                    
+
                     VStack(spacing: 16) {
                         // Sync frequency
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Sync Frequency")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
-                            
+
                             Picker("Sync Interval", selection: $selectedSyncInterval) {
                                 Text("30 Minutes").tag(TimeInterval(30 * 60))
                                 Text("1 Hour").tag(TimeInterval(60 * 60))
@@ -499,7 +477,7 @@ struct SampleView: View {
                             }
                             .pickerStyle(.segmented)
                         }
-                        
+
                         // Sync button using ClaudeButton
                         HStack {
                             ClaudeButton(
@@ -516,7 +494,7 @@ struct SampleView: View {
                             .opacity(isSyncing ? 0.7 : 1.0)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
-                        
+
                         // Last sync info
                         if let lastSync = lastSyncTime {
                             Text("Last synced: \(timeAgoString(from: lastSync))")
@@ -531,12 +509,12 @@ struct SampleView: View {
                             .fill(Color(.systemGray6))
                     )
                 }
-                
+
                 // Appearance settings
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Appearance")
                         .font(.headline)
-                    
+
                     VStack(spacing: 16) {
                         Toggle("Show Walking Routes", isOn: $showWalkingRoutes)
                         Toggle("Show Running Routes", isOn: $showRunningRoutes)
@@ -550,12 +528,12 @@ struct SampleView: View {
                             .fill(Color(.systemGray6))
                     )
                 }
-                
+
                 // About section
                 VStack(alignment: .leading, spacing: 12) {
                     Text("About")
                         .font(.headline)
-                    
+
                     VStack(spacing: 16) {
                         HStack {
                             Text("Version")
@@ -563,14 +541,14 @@ struct SampleView: View {
                             Text("1.0.0")
                                 .foregroundColor(.gray)
                         }
-                        
+
                         HStack {
                             Text("Build")
                             Spacer()
                             Text("2025.03.23")
                                 .foregroundColor(.gray)
                         }
-                        
+
                         ClaudeButton(
                             "Privacy Policy",
                             color: .gray,
@@ -594,16 +572,16 @@ struct SampleView: View {
             .padding(.top, 16)
         }
     }
-    
+
     // MARK: - Route Tab Subviews
-    
+
     private var syncStatusSection: some View {
         VStack(spacing: 12) {
             HStack {
                 Text("Route Data")
                     .font(.headline)
                 Spacer()
-                
+
                 // Sync button using ClaudeButton
                 ClaudeButton(
                     "Sync",
@@ -618,14 +596,14 @@ struct SampleView: View {
                 .disabled(isSyncing)
                 .opacity(isSyncing ? 0.7 : 1.0)
             }
-            
+
             // Summary counts
             HStack(spacing: 20) {
                 routeCountCard(count: healthKitManager.walkingRoutes.count, title: "Walking", color: .blue)
                 routeCountCard(count: healthKitManager.runningRoutes.count, title: "Running", color: .red)
                 routeCountCard(count: healthKitManager.cyclingRoutes.count, title: "Cycling", color: .green)
             }
-            
+
             // Last sync info
             if let lastSync = lastSyncTime {
                 Text("Last synced: \(timeAgoString(from: lastSync))")
@@ -635,7 +613,7 @@ struct SampleView: View {
             }
         }
     }
-    
+
     private var routeToggleSection: some View {
         HStack(spacing: 12) {
             routeToggleButton(title: "Walking", isOn: $showWalkingRoutes, color: .blue)
@@ -643,12 +621,12 @@ struct SampleView: View {
             routeToggleButton(title: "Cycling", isOn: $showCyclingRoutes, color: .green)
         }
     }
-    
+
     private var routeListSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Recent Routes")
                 .font(.headline)
-            
+
             if !filteredItems.isEmpty {
                 VStack(spacing: 10) {
                     ForEach(filteredItems, id: \.self) { item in
@@ -656,12 +634,12 @@ struct SampleView: View {
                             Circle()
                                 .fill(colorForRoute(item))
                                 .frame(width: 12, height: 12)
-                            
+
                             Text(item)
                                 .font(.system(size: 16, weight: .medium))
-                            
+
                             Spacer()
-                            
+
                             Text("Today")
                                 .font(.caption)
                                 .foregroundColor(.gray)
@@ -685,15 +663,15 @@ struct SampleView: View {
             }
         }
     }
-    
+
     // MARK: - Helper Views
-    
+
     private func routeCountCard(count: Int, title: String, color: Color) -> some View {
         VStack {
             Text("\(count)")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundColor(color)
-            
+
             Text(title)
                 .font(.caption)
                 .foregroundColor(.gray)
@@ -709,7 +687,7 @@ struct SampleView: View {
                 )
         )
     }
-    
+
     private func routeToggleButton(title: String, isOn: Binding<Bool>, color: Color) -> some View {
         Button {
             isOn.wrappedValue.toggle()
@@ -718,7 +696,7 @@ struct SampleView: View {
                 Circle()
                     .fill(isOn.wrappedValue ? color : Color.gray.opacity(0.3))
                     .frame(width: 12, height: 12)
-                
+
                 Text(title)
                     .font(.caption)
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
@@ -730,29 +708,32 @@ struct SampleView: View {
                     .fill(isOn.wrappedValue ? color.opacity(0.1) : Color(.systemGray6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(isOn.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 1)
+                            .strokeBorder(
+                                isOn.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2),
+                                lineWidth: 1
+                            )
                     )
             )
         }
     }
-    
+
     // MARK: - Helper Functions
-    
+
     private func performSync() {
         // Start the sync process
         isSyncing = true
-        
+
         // Using Task to properly handle async operations
         Task {
             do {
                 // Simulate network request with better performance
                 try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
-                
+
                 // Use the main thread for UI updates
                 await MainActor.run {
                     // Load routes more efficiently
                     healthKitManager.loadRoutes()
-                    
+
                     // Update state
                     lastSyncTime = Date()
                     isSyncing = false
@@ -760,20 +741,20 @@ struct SampleView: View {
             } catch {
                 // Handle any errors
                 print("Sync error: \(error)")
-                
+
                 await MainActor.run {
                     isSyncing = false
                 }
             }
         }
     }
-    
+
     private func timeAgoString(from date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
     }
-    
+
     private func colorForRoute(_ route: String) -> Color {
         if route.contains("Walking") {
             return .blue
@@ -784,56 +765,74 @@ struct SampleView: View {
         }
         return .gray
     }
-    
+
     private func iconForAction(_ action: String) -> String {
         switch action {
-        case "Check Weather": return "cloud.sun"
-        case "Track Package": return "shippingbox"
-        case "Start Workout": return "figure.run"
-        case "Find Transit": return "bus"
-        default: return "star"
+        case "Check Weather": "cloud.sun"
+        case "Track Package": "shippingbox"
+        case "Start Workout": "figure.run"
+        case "Find Transit": "bus"
+        default: "star"
         }
     }
-    
+
     private func iconForCategory(_ category: String) -> String {
         switch category {
-        case "Restaurant": return "fork.knife"
-        case "Coffee": return "cup.and.saucer"
-        case "Park": return "leaf"
-        case "Shopping": return "bag"
-        default: return "mappin"
+        case "Restaurant": "fork.knife"
+        case "Coffee": "cup.and.saucer"
+        case "Park": "leaf"
+        case "Shopping": "bag"
+        default: "mappin"
         }
     }
-    
+
     private func gradientForCategory(_ category: String) -> LinearGradient {
         switch category {
         case "Restaurant":
-            return LinearGradient(gradient: Gradient(colors: [.orange, .red]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(
+                gradient: Gradient(colors: [.orange, .red]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         case "Coffee":
-            return LinearGradient(gradient: Gradient(colors: [.brown, .orange]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(
+                gradient: Gradient(colors: [.brown, .orange]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         case "Park":
-            return LinearGradient(gradient: Gradient(colors: [.green, .mint]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(
+                gradient: Gradient(colors: [.green, .mint]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         case "Shopping":
-            return LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(
+                gradient: Gradient(colors: [.blue, .purple]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         default:
-            return LinearGradient(gradient: Gradient(colors: [.blue, .teal]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(
+                gradient: Gradient(colors: [.blue, .teal]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
-    
+
     private func iconForLocation(_ location: String) -> String {
         switch location {
-        case "Home": return "house"
-        case "Work": return "briefcase"
-        case "Gym": return "dumbbell"
-        case "Coffee Shop": return "cup.and.saucer"
-        default: return "mappin"
+        case "Home": "house"
+        case "Work": "briefcase"
+        case "Gym": "dumbbell"
+        case "Coffee Shop": "cup.and.saucer"
+        default: "mappin"
         }
     }
 }
 
-
 // MARK: - Helper Components
-
 
 /// A shortcut button with gradient background.
 struct ShortcutCard: View {
@@ -841,7 +840,7 @@ struct ShortcutCard: View {
     let icon: String
     let gradient: Gradient
     var action: (() -> Void)? = nil
-    
+
     var body: some View {
         Button(action: {
             action?()
@@ -850,9 +849,9 @@ struct ShortcutCard: View {
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(.white)
-                
+
                 Spacer()
-                
+
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
