@@ -354,26 +354,14 @@ struct SampleView: View {
                             ["Check Weather", "Track Package", "Start Workout", "Find Transit"],
                             id: \.self
                         ) { action in
-                            HStack {
-                                Image(systemName: iconForAction(action))
-                                    .frame(width: 24, height: 24)
-                                    .foregroundColor(.blue)
-
-                                Text(action)
-                                    .font(.system(size: 16, weight: .medium))
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(.systemGray6))
-                            )
+                            ClaudeButton(
+                                action,
+                                color: .gray,
+                                size: .medium,
+                                rounded: true,
+                                icon: Image(systemName: iconForAction(action)),
+                                style: .modernAqua
+                            ) {}
                         }
                     }
                 }
@@ -616,9 +604,51 @@ struct SampleView: View {
 
     private var routeToggleSection: some View {
         HStack(spacing: 12) {
+            // old cyberpunky style
             routeToggleButton(title: "Walking", isOn: $showWalkingRoutes, color: .blue)
             routeToggleButton(title: "Running", isOn: $showRunningRoutes, color: .red)
             routeToggleButton(title: "Cycling", isOn: $showCyclingRoutes, color: .green)
+            
+//            ClaudeButton(
+//                "Walking",
+//                color: ClaudeButtonColor.blue,
+//                size: .small,
+//                rounded: true,
+//                icon: nil,
+//                style: .modernAqua
+//            ) {
+//                $showWalkingRoutes.wrappedValue.toggle()
+//            }
+//            .opacity($showWalkingRoutes.wrappedValue ? 1.0 : 0.5)
+//            
+//            Spacer()
+//            
+//            ClaudeButton(
+//                "Running",
+//                color: ClaudeButtonColor.red,
+//                size: .small,
+//                rounded: true,
+//                icon: nil,
+//                style: .modernAqua
+//            ) {
+//                $showRunningRoutes.wrappedValue.toggle()
+//            }
+//            .opacity($showRunningRoutes.wrappedValue ? 1.0 : 0.5)
+//            
+//            Spacer()
+//            
+//            ClaudeButton(
+//                "Cycling",
+//                color: ClaudeButtonColor.green,
+//                size: .small,
+//                rounded: true,
+//                icon: nil,
+//                style: .modernAqua
+//            ) {
+//                $showCyclingRoutes.wrappedValue.toggle()
+//            }
+//            .opacity($showCyclingRoutes.wrappedValue ? 1.0 : 0.5)
+            
         }
     }
 
