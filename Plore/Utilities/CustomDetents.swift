@@ -20,6 +20,9 @@ struct OneSmallThanMaxDetent: CustomPresentationDetent {
 /// A compact custom sheet detent.
 struct CompactDetent: CustomPresentationDetent {
     static func height(in context: Context) -> CGFloat? {
-        context.maxDetentValue * 0.08
+        // Define a minimum height needed to display your top UI (e.g., search bar)
+        let minimumHeight: CGFloat = 130
+        let computedHeight = context.maxDetentValue * 0.08
+        return max(minimumHeight, computedHeight)
     }
 }

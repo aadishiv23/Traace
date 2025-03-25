@@ -23,16 +23,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "1B54AAAB-092B-41A1-B8C3-D063E4A65E36"
-            shouldBeEnabled = "Yes"
+            uuid = "7CE6DBFA-2074-4736-A7E8-EEA21F5A3578"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Plore/Managers/HealthKitManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "128"
-            endingLineNumber = "128"
-            landmarkName = "syncData(interval:)"
+            startingLineNumber = "55"
+            endingLineNumber = "55"
+            landmarkName = "computePolylines()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

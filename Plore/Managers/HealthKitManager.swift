@@ -52,30 +52,29 @@ class HealthKitManager: ObservableObject {
     // MARK: - Polyline
 
     func computePolylines() async {
-        
         async let walkingPolylines = Task.detached(priority: .userInitiated) {
             self.walkingRoutes.map { route in
                 let coordinates = route.map(\.coordinate)
                 return MKPolyline(coordinates: coordinates, count: coordinates.count)
             }
         }.value
-        
+
         async let runningPolylines = Task.detached(priority: .userInitiated) {
             self.runningRoutes.map { route in
                 let coordinates = route.map(\.coordinate)
                 return MKPolyline(coordinates: coordinates, count: coordinates.count)
             }
         }.value
-        
+
         async let cyclingPolylines = Task.detached(priority: .userInitiated) {
             self.cyclingRoutes.map { route in
                 let coordinates = route.map(\.coordinate)
                 return MKPolyline(coordinates: coordinates, count: coordinates.count)
             }
         }.value
-        
+
         let (walkingPolys, runningPolys, cyclingPolys) = await (walkingPolylines, runningPolylines, cyclingPolylines)
-        
+
         Task { @MainActor in
             self.walkingPolylines = walkingPolys
             self.runningPolylines = runningPolys
@@ -371,4 +370,42 @@ class HealthKitManager: ObservableObject {
         return simplified
     }
 
+}
+
+// MARK: - Filtering
+
+extension HealthKitManager {
+
+    func filterRoutesByDate(date: Date?) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
+        guard let date = date else {
+            return (walkingPolylines, runningPolylines, cyclingPolylines)
+        }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        return filterRoutesByDateRange(start: startOfDay, end: endOfDay)
+    }
+
+    func filterRoutesByDateRange(start: Date, end: Date) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
+        let filteredWalking = filterRoutes(routes: walkingRoutes, polylines: walkingPolylines, start: start, end: end)
+        let filteredRunning = filterRoutes(routes: runningRoutes, polylines: runningPolylines, start: start, end: end)
+        let filteredCycling = filterRoutes(routes: cyclingRoutes, polylines: cyclingPolylines, start: start, end: end)
+        
+        return (filteredWalking, filteredRunning, filteredCycling)
+    }
+
+    private func filterRoutes(routes: [[CLLocation]], polylines: [MKPolyline], start: Date, end: Date) -> [MKPolyline] {
+        var filteredPolylines: [MKPolyline] = []
+        
+        for (index, route) in routes.enumerated() {
+            if index < polylines.count, let firstLocation = route.first,
+               firstLocation.timestamp >= start && firstLocation.timestamp < end {
+                filteredPolylines.append(polylines[index])
+            }
+        }
+        
+        return filteredPolylines
+    }
 }
