@@ -53,32 +53,9 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Map {
-                    // 🟦 Walking Routes
-                    if showWalkingRoutes {
-                        ForEach(filteredWalkingPolylines, id: \.self) { polyline in
-                            MapPolyline(polyline)
-                                .stroke(Color.blue, lineWidth: 3)
-                        }
-                    }
+                mapOverlay
 
-                    // 🟥 Running Routes
-                    if showRunningRoutes {
-                        ForEach(filteredRunningPolylines, id: \.self) { polyline in
-                            MapPolyline(polyline)
-                                .stroke(Color.red, lineWidth: 3)
-                        }
-                    }
-
-                    // 🟩 Cycling Routes
-                    if showCyclingRoutes {
-                        ForEach(filteredCyclingPolylines, id: \.self) { polyline in
-                            MapPolyline(polyline)
-                                .stroke(Color.green, lineWidth: 3)
-                        }
-                    }
-                }
-                .edgesIgnoringSafeArea(.all)
+                controlButtons
 
                 // Hidden navigation link for programmatic navigation.
                 NavigationLink(
@@ -87,54 +64,12 @@ struct ContentView: View {
                 ) {
                     EmptyView()
                 }
-
-//                NavigationLink(
-//                    destination: PetalAssistantView(),
-//                    isActive: $navigateToPetal
-//                ) {
-//                    EmptyView()
-//                }
             }
             // Primary sheet – SampleView.
             .sheet(isPresented: $showExampleSheet) {
-                SampleView(
-                    healthKitManager: healthKitManager,
-                    showWalkingRoutes: $showWalkingRoutes,
-                    showRunningRoutes: $showRunningRoutes,
-                    showCyclingRoutes: $showCyclingRoutes,
-                    selectedFilterDate: $selectedFilterDate,
-                    onOpenAppTap: {
-                        updateFilteredRoutes()
-                    },
-                    onNoteTap: {
-                        // Dismiss SampleView and present OpenAppView.
-                        showExampleSheet = false
-                        wasExampleSheetDismissed = true
-                        DispatchQueue.main.async {
-                            showOpenAppSheet = true
-                        }
-                    },
-                    onPetalTap: {
-                        // Dismiss SampleView and navigate to NoteView.
-                        showExampleSheet = false
-                        wasExampleSheetDismissed = true
-                        DispatchQueue.main.async {
-                            navigateToNote = true
-                        }
-                    },
-                    onDateFilterChanged: {
-                        self.updateFilteredRoutes()
-                    }
-                )
-                .presentationDetents([
-                    .custom(CompactDetent.self),
-                    .medium,
-                    .custom(OneSmallThanMaxDetent.self)
-                ])
-                .presentationCornerRadius(30)
-                .presentationBackgroundInteraction(.enabled)
-                .interactiveDismissDisabled()
+                sampleSheetContent
             }
+
             // Secondary sheet – OpenAppView.
             .sheet(isPresented: $showOpenAppSheet, onDismiss: {
                 showExampleSheet = true
@@ -142,31 +77,125 @@ struct ContentView: View {
                 OpenAppView()
             }
             .onAppear {
-                // Show ExampleSheet again if returning to this view.
-                // CoreDataManager.shared.clearAllData()
-
-                showExampleSheet = true
-                Task(priority: .high) {
-                    await healthKitManager.requestHKPermissions()
-                }
-                healthKitManager.loadRoutes()
-
-                // Initialize filtered routes with all routes
-                filteredWalkingPolylines = healthKitManager.walkingPolylines
-                filteredRunningPolylines = healthKitManager.runningPolylines
-                filteredCyclingPolylines = healthKitManager.cyclingPolylines
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) { // Wait 5s for routes to load.
-                    print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
-                    print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
-                    print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
-
-                    updateFilteredRoutes()
-                }
+                initializeView()
             }
+
             .toolbar(.hidden, for: .navigationBar)
         }
     }
+
+    // MARK: Subviews
+
+    /// Map overlay.
+    private var mapOverlay: some View {
+        Map {
+            if showWalkingRoutes {
+                ForEach(filteredWalkingPolylines, id: \.self) {
+                    MapPolyline($0).stroke(Color.blue, lineWidth: 3)
+                }
+            }
+            if showRunningRoutes {
+                ForEach(filteredRunningPolylines, id: \.self) {
+                    MapPolyline($0).stroke(Color.red, lineWidth: 3)
+                }
+            }
+            if showCyclingRoutes {
+                ForEach(filteredCyclingPolylines, id: \.self) {
+                    MapPolyline($0).stroke(Color.green, lineWidth: 3)
+                }
+            }
+        }
+        .edgesIgnoringSafeArea(.all)
+    }
+
+    /// Control button overlay.
+    private var controlButtons: some View {
+        VStack {
+            Spacer()
+            HStack {
+                VStack(spacing: 0) {
+                    routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: .red)
+                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
+                    routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: .green)
+                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
+                    routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: .blue)
+                }
+                .frame(width: 50)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .padding(.leading, 10)
+                .padding(.bottom, 360)
+                .shadow(radius: 5)
+
+                Spacer()
+            }
+
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private func routeToggleButton(icon: String, isOn: Binding<Bool>, color: Color) -> some View {
+        let isActive = isOn.wrappedValue
+
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                isOn.wrappedValue.toggle()
+            }
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(isActive ? color : .gray)
+                .frame(width: 44, height: 44)
+                .scaleEffect(isActive ? 1.1 : 1.0)
+                .symbolEffect(.bounce, value: isActive)
+
+        }
+        .contentShape(Rectangle())
+    }
+
+    // MARK: Vars
+
+    @ViewBuilder
+    private var sampleSheetContent: some View {
+        SampleView(
+            healthKitManager: healthKitManager,
+            showWalkingRoutes: $showWalkingRoutes,
+            showRunningRoutes: $showRunningRoutes,
+            showCyclingRoutes: $showCyclingRoutes,
+            selectedFilterDate: $selectedFilterDate,
+            onOpenAppTap: {
+                updateFilteredRoutes()
+            },
+            onNoteTap: {
+                showExampleSheet = false
+                wasExampleSheetDismissed = true
+                DispatchQueue.main.async {
+                    showOpenAppSheet = true
+                }
+            },
+            onPetalTap: {
+                showExampleSheet = false
+                wasExampleSheetDismissed = true
+                DispatchQueue.main.async {
+                    navigateToNote = true
+                }
+            },
+            onDateFilterChanged: {
+                updateFilteredRoutes()
+            }
+        )
+        .presentationDetents([
+            .custom(CompactDetent.self),
+            .medium,
+            .custom(OneSmallThanMaxDetent.self)
+        ])
+        .presentationCornerRadius(30)
+        .presentationBackgroundInteraction(.enabled)
+        .interactiveDismissDisabled()
+    }
+
+    // MARK: Functions
 
     func updateFilteredRoutes() {
         let filtered = healthKitManager.filterRoutesByDate(date: selectedFilterDate)
@@ -174,6 +203,28 @@ struct ContentView: View {
         filteredRunningPolylines = filtered.running
         filteredCyclingPolylines = filtered.cycling
     }
+
+    private func initializeView() {
+        showExampleSheet = true
+
+        Task(priority: .high) {
+            await healthKitManager.requestHKPermissions()
+        }
+
+        healthKitManager.loadRoutes()
+
+        filteredWalkingPolylines = healthKitManager.walkingPolylines
+        filteredRunningPolylines = healthKitManager.runningPolylines
+        filteredCyclingPolylines = healthKitManager.cyclingPolylines
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
+            print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
+            print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
+            updateFilteredRoutes()
+        }
+    }
+
 }
 
 // MARK: - Helper Components

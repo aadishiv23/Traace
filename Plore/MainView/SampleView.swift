@@ -20,9 +20,6 @@ struct SampleView: View {
     /// The search text.
     @State private var searchText: String = ""
 
-    /// The currently selected tab.
-    @State private var selectedTab: TabSection = .routes
-
     /// Indicates if sync is in progress
     @State private var isSyncing = false
 
@@ -31,6 +28,8 @@ struct SampleView: View {
 
     /// The date selected to be filtered by.
     @State private var selectedDate: Date? = nil
+
+    @State private var isShowingSettingsPanel = false
 
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager: HealthKitManager
@@ -49,7 +48,7 @@ struct SampleView: View {
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
     let onPetalTap: () -> Void
-    
+
     let onDateFilterChanged: (() -> Void)?
 
     let sampleData = ["Running Route", "Walking Route", "Cycling Route"] // Placeholder data
@@ -57,16 +56,16 @@ struct SampleView: View {
     /// Tab sections
     enum TabSection: String, CaseIterable {
         case routes = "Routes"
-        /// case shortcuts = "Shortcuts"
-        ///  case explore = "Explore"
-        case settings = "Settings"
+        // case shortcuts = "Shortcuts"
+        //  case explore = "Explore"
+        // case settings = "Settings"
 
         var icon: String {
             switch self {
             case .routes: "map"
-            // case .shortcuts: "square.grid.2x2"
-            // case .explore: "safari"
-            case .settings: "gear"
+                // case .shortcuts: "square.grid.2x2"
+                // case .explore: "safari"
+                // case .settings: "gear"
             }
         }
     }
@@ -78,68 +77,92 @@ struct SampleView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
-            searchBarSection
-            tabSelectorSection
-            Divider()
-            tabContentSection
+        ZStack {
+            VStack(spacing: 0) {
+                searchBarSection
+                    .padding(.vertical, 15)
+                tabContentSection
+            }
+
+            if isShowingSettingsPanel {
+                settingsOverlay
+            }
         }
     }
 
     @ViewBuilder
     private var searchBarSection: some View {
-        SearchBarView(searchText: $searchText, selectedDate: $selectedFilterDate)
-            .onChange(of: selectedFilterDate) { _ in
-                // Simply notify parent view through an optional callback
-                onDateFilterChanged?()
-            }
-    }
+        HStack {
+            SearchBarView(searchText: $searchText, selectedDate: $selectedFilterDate)
+                .onChange(of: selectedFilterDate) { _ in
+                    onDateFilterChanged?()
+                }
 
-    @ViewBuilder
-    private var tabSelectorSection: some View {
-        HStack(spacing: 0) {
-            ForEach(TabSection.allCases, id: \.self) { tab in
-                tabButton(for: tab)
+            Button(action: {
+                withAnimation {
+                    isShowingSettingsPanel.toggle()
+                }
+            }) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.gray)
+                    .padding(8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.bottom, 8)
+        .padding(.horizontal)
+    }
+
+    private var settingsOverlay: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation {
+                        isShowingSettingsPanel = false
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.gray)
+                        .padding()
+                }
+            }
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Settings")
+                        .font(.title.bold())
+                        .padding(.bottom, 10)
+
+                    Toggle("Show Walking Routes", isOn: $showWalkingRoutes)
+                    Toggle("Show Running Routes", isOn: $showRunningRoutes)
+                    Toggle("Show Cycling Routes", isOn: $showCyclingRoutes)
+                    Toggle("Dark Mode", isOn: .constant(false))
+                    Toggle("Show Distance", isOn: .constant(true))
+
+                    Divider().padding(.vertical)
+
+                    Text("Version 1.0.0 • Build 2025.03.23")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                }
+                .padding()
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
+        .transition(.move(edge: .trailing))
+        .animation(.easeInOut(duration: 0.2), value: isShowingSettingsPanel)
+        .zIndex(1)
     }
 
     @ViewBuilder
     private var tabContentSection: some View {
-        TabView(selection: $selectedTab) {
-            routesTabContent.tag(TabSection.routes)
-            // shortcutsTabContent.tag(TabSection.shortcuts)
-            // exploreTabContent.tag(TabSection.explore)
-            settingsTabContent.tag(TabSection.settings)
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-    }
-
-    private func tabButton(for tab: TabSection) -> some View {
-        Button(action: {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedTab = tab
-            }
-        }) {
-            VStack(spacing: 6) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 20))
-
-                Text(tab.rawValue)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .frame(maxWidth: .infinity)
-            .foregroundColor(selectedTab == tab ? Color.blue : Color.gray)
-            .padding(.vertical, 8)
-        }
-        .background(
-            selectedTab == tab
-                ? Color.blue.opacity(0.1)
-                : Color.clear
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        routesTabContent
     }
 
     // MARK: - Tab Contents
@@ -720,4 +743,33 @@ struct SampleView: View {
         default: "mappin"
         }
     }
+}
+
+#Preview {
+    SampleView(
+        healthKitManager: HealthKitManager(), // Replace with a mock if needed
+        showWalkingRoutes: .constant(true),
+        showRunningRoutes: .constant(true),
+        showCyclingRoutes: .constant(true),
+        selectedFilterDate: .constant(nil),
+        onOpenAppTap: {},
+        onNoteTap: {},
+        onPetalTap: {},
+        onDateFilterChanged: nil
+    )
+}
+
+#Preview {
+    SampleView(
+        healthKitManager: HealthKitManager(), // Replace with a mock if needed
+        showWalkingRoutes: .constant(true),
+        showRunningRoutes: .constant(true),
+        showCyclingRoutes: .constant(true),
+        selectedFilterDate: .constant(nil),
+        onOpenAppTap: {},
+        onNoteTap: {},
+        onPetalTap: {},
+        onDateFilterChanged: nil
+    )
+    .preferredColorScheme(.dark)
 }

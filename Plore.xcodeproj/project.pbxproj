@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC3D77782D965827009104C1 /* SearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3D77772D965827009104C1 /* SearchOverlayView.swift */; };
 		ACC1112C2D4BE99200FED96A /* PloreTracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AC3D77772D965827009104C1 /* SearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchOverlayView.swift; sourceTree = "<group>"; };
 		ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PloreTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -153,6 +155,7 @@
 		ACD046A42D4A88EF002A2E77 = {
 			isa = PBXGroup;
 			children = (
+				AC3D77772D965827009104C1 /* SearchOverlayView.swift */,
 				ACD046AF2D4A88EF002A2E77 /* Plore */,
 				ACD046C02D4A88F1002A2E77 /* PloreTests */,
 				ACD046CA2D4A88F1002A2E77 /* PloreUITests */,
@@ -446,6 +449,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC3D77782D965827009104C1 /* SearchOverlayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

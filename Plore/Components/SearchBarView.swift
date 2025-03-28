@@ -86,8 +86,10 @@ struct SearchBarView: View {
                     )
                     .foregroundColor(.white)
                 }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
+        .animation(.easeInOut(duration: 0.35), value: selectedDate)
         .padding(.horizontal)
         .sheet(isPresented: $showDatePicker) {
             VStack(spacing: 20) {
