@@ -9,6 +9,7 @@ import CoreData
 import CoreLocation
 import Foundation
 import HealthKit
+import os
 
 /// A singleton that manages the Core Data stack and provides an interface for saving/fetching  data.
 final class CoreDataManager {
@@ -18,25 +19,66 @@ final class CoreDataManager {
     /// The static shared instance.
     static let shared = CoreDataManager()
 
+    /// Logger obj to log shit.
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: "com.aadishivmalhotra.Plore.CoreDataManager"
+    )
+
     // MARK: Persistence Container
 
     lazy var persistenceContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "HealthRoutes")
-        container.loadPersistentStores { _, error in
-            if let error {
-                fatalError("Unable to load persistent stores: \(error)")
+        // Load stores asynchronously to avoid blocking
+        container.loadPersistentStores { storeDescription, error in
+            if let error = error as NSError? {
+                // Consider more robust error handling than fatalError in production
+                self.logger.critical("Unable to load persistent stores: \(error), \(error.userInfo)")
+                fatalError("Unable to load persistent stores: \(error), \(error.userInfo)")
+            } else {
+                self.logger.info("Persistent store loaded: \(storeDescription.url?.lastPathComponent ?? "N/A")")
+                // Ensure main context automatically merges changes from background contexts
+                container.viewContext.automaticallyMergesChangesFromParent = true
             }
         }
         return container
     }()
 
     /// A convenient main-thread context for quick reads/writes
+    /// need to use sparingly for writes
     var mainContext: NSManagedObjectContext {
         persistenceContainer.viewContext
     }
 
+    /// Creates a new background context for performing Core Data operations off the main thread.
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = persistenceContainer.newBackgroundContext()
+
+        // Merging policy for bg saves if needed (often set where the context is used)
+        // context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
+
     // MARK: Save Context
 
+    func saveContext(_ context: NSManagedObjectContext) {
+        guard context.hasChanges else {
+            return
+        }
+
+        context.performAndWait { // use if sync save needed or peform for async
+            do {
+                try context.save()
+                logger.debug("Context saved successfully.")
+            } catch {
+                logger.error("❌ Error saving context: \(error.localizedDescription)")
+                // Optionally roll back or handle the error more gracefully
+                // context.rollback()
+            }
+        }
+    }
+
+    /// Convenience method to save the main context (use carefully)
     func saveContext() {
         let context = mainContext
         if context.hasChanges {
@@ -52,77 +94,133 @@ final class CoreDataManager {
 
     /// Returns an existing CDWorkout if it exists (by matching the HKWorkout's UUID),
     /// or creates a new one if not found.
-    func fetchOrCreateWorkout(from hkWorkout: HKWorkout, in context: NSManagedObjectContext) -> CDWorkout {
+    func fetchOrCreateWorkout(from hkWorkout: HKWorkout, in context: NSManagedObjectContext) -> CDWorkout? {
         // pkey
         let workoutId = hkWorkout.uuid.uuidString
+        var resultWorkout: CDWorkout? = nil
 
-        let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", workoutId)
+        context.performAndWait { // ensure ops happen on correct context que
+            let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", workoutId)
 
-        do {
-            let results = try context.fetch(fetchRequest)
-            if let existingWorkout = results.first {
-                return existingWorkout
+            fetchRequest.fetchLimit = 1 // only need 1 or none
+
+            do {
+                let results = try context.fetch(fetchRequest)
+                if let existingWorkout = results.first {
+                    logger.debug("Fetched existing workout: \(workoutId)")
+                    resultWorkout = existingWorkout
+                } else {
+                    logger.debug("Creating new workout: \(workoutId)")
+                    let newWorkout = CDWorkout(context: context)
+                    newWorkout.id = workoutId
+                    newWorkout.startDate = hkWorkout.startDate
+                    newWorkout.endDate = hkWorkout.endDate
+                    // Store the raw value safely
+                    newWorkout.type = String(hkWorkout.workoutActivityType.rawValue)
+                    // Check metadata for indoor status
+                    newWorkout.isIndoor = (hkWorkout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool) ?? false
+                    resultWorkout = newWorkout
+                }
+            } catch {
+                logger.error("❌ Error fetching or creating workout \(workoutId): \(error.localizedDescription)")
+                resultWorkout = nil // Ensure nil is returned on error
             }
-        } catch {
-            print("❌ Error fetching workout: \(error.localizedDescription)")
         }
 
-        let newWorkout = CDWorkout(context: context)
-        newWorkout.id = workoutId
-        newWorkout.startDate = hkWorkout.startDate
-        newWorkout.endDate = hkWorkout.endDate
-        newWorkout.type = String(hkWorkout.workoutActivityType.rawValue)
-        newWorkout.isIndoor = (hkWorkout.metadata?["HKWorkoutMetadataIndoor"] as? Bool) ?? false
-        return newWorkout
+        return resultWorkout
     }
 
-    // MARK: Add RoutePoints
+    // MARK: Add RoutePoints (Operates on the provided context)
 
-    /// Creates and inserts CDRoutePoint objects for the provided locations, linking them to the parent workout.
+    /// Creates and inserts CDRoutePoint objects within the specified context.
     func addRoutePoints(_ locations: [CLLocation], to cdWorkout: CDWorkout, in context: NSManagedObjectContext) {
-        for loc in locations {
-            let cdPoint = CDRoutePoint(context: context)
-            cdPoint.latitude = loc.coordinate.latitude
-            cdPoint.longitude = loc.coordinate.longitude
-            cdPoint.timestamp = loc.timestamp
-            cdPoint.workout = cdWorkout
+        context.performAndWait { // Ensure Core Data operations happen on the context's queue
+            guard cdWorkout.managedObjectContext == context else {
+                logger.error("❌ Mismatched context for workout and route points.")
+                return // Avoid cross-context issues
+            }
+
+            logger.debug("Adding \(locations.count) route points to workout \(cdWorkout.id ?? "N/A")")
+            for loc in locations {
+                let cdPoint = CDRoutePoint(context: context)
+                cdPoint.latitude = loc.coordinate.latitude
+                cdPoint.longitude = loc.coordinate.longitude
+                cdPoint.timestamp = loc.timestamp
+                // Link the point to the workout. Ensure cdWorkout is managed by the same context.
+                cdPoint.workout = cdWorkout
+                // Consider adding to the workout's relationship set as well if needed immediately,
+                // but Core Data manages the inverse relationship automatically.
+                // cdWorkout.addToRoutePoints(cdPoint)
+            }
         }
     }
 
     // MARK: Fetch All Workouts from Core Data
 
     /// Returns all workouts stored in Core Data (with prefetching routePoints if desired).
-    func fetchAllWorkouts() -> [CDWorkout] {
-        let context = mainContext
+    func fetchAllWorkouts(context: NSManagedObjectContext? = nil) async -> [CDWorkout] {
+        let fetchContext = context ?? mainContext
         let request: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
         // Optionally prefetch routePoints to avoid multiple round-trips:
         request.relationshipKeyPathsForPrefetching = ["routePoints"]
 
-        do {
-            return try context.fetch(request)
-        } catch {
-            print("❌ Failed to fetch workouts: \(error.localizedDescription)")
-            return []
-        }
-    }
+        // Optional: Sort descriptors if needed
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \CDWorkout.startDate, ascending: false)]
 
-    func clearAllData() {
-        let entities = persistenceContainer.managedObjectModel.entities
-
-        for entity in entities {
-            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entity.name!)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-
+        return await fetchContext.perform { // Use perform for async fetch
             do {
-                try persistenceContainer.viewContext.execute(deleteRequest)
-                print("✅ Cleared Core Data for entity: \(entity.name!)")
+                let workouts = try fetchContext.fetch(request)
+                self.logger.info("Fetched \(workouts.count) workouts from context.")
+                return workouts
             } catch {
-                print("❌ Error clearing Core Data: \(error.localizedDescription)")
+                self.logger.error("❌ Failed to fetch workouts: \(error.localizedDescription)")
+                return []
             }
         }
-
-        saveContext()
     }
 
+    func clearAllData() async {
+        let backgroundContext = newBackgroundContext()
+        let entities = persistenceContainer.managedObjectModel.entities
+
+        await backgroundContext.perform { // deletion on bg context
+            for entity in entities {
+                guard let entityName = entity.name else {
+                    continue
+                }
+                let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+
+                // Set delete result type to count the num of deleted objs, not rlly needed but may be useful at some
+                // point
+                deleteRequest.resultType = .resultTypeCount
+
+                do {
+                    let result = try backgroundContext.execute(deleteRequest) as? NSBatchDeleteResult
+                    let count = result?.result as? Int ?? 0
+                    self.logger.info("✅ Cleared \(count) objects for entity: \(entityName)")
+                } catch {
+                    self.logger
+                        .error(
+                            "❌ Error clearing Core Data for entity \(entityName): \(error.localizedDescription)"
+                        )
+                }
+            }
+
+            // After batch delete, the main context won't know about the changes unless merged.
+            // Since we're clearing everything, maybe resetting the main context is simpler,
+            // or refetching data after clearing.
+            // However, saving the background context should be sufficient if
+            // automaticallyMergesChangesFromParent is true on the main context.
+            self.saveContext(backgroundContext) // Save changes made by batch delete
+        }
+
+        // Consider explicitly resetting the main context if needed after a full clear
+        // Or ensure UI reloads data after clearing.
+        await MainActor.run {
+            // mainContext.reset() // uncomment if needed
+            logger.info("Core Data clearing complete.")
+        }
+    }
 }
