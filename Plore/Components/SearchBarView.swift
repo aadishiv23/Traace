@@ -7,12 +7,24 @@
 
 import SwiftUI
 
+/// A reusable search bar. The `isInteractive` flag lets us disable typing
+/// in the “compact” version but enable it in the “expanded” overlay.
 struct SearchBarView: View {
+
+    /// The string passed in as the search variable.
     @Binding var searchText: String
+
+    /// The date passed in as the optional search var.
     @Binding var selectedDate: Date?
+
+    /// Whether the user can actually type here (in the search overlay).
+    var isInteractive: Bool
 
     @State private var showDatePicker = false
     @State private var tempDate = Date()
+
+    /// Focus state for the text field
+    @FocusState private var textFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 8) {
@@ -24,6 +36,8 @@ struct SearchBarView: View {
 
                     TextField("Search routes", text: $searchText)
                         .font(.system(size: 16))
+                        .disabled(isInteractive)
+                        .focused($textFieldFocused)
 
                     if !searchText.isEmpty {
                         Button(action: {
@@ -55,6 +69,7 @@ struct SearchBarView: View {
                                 .fill(selectedDate != nil ? Color.blue.opacity(0.1) : Color(.systemGray6))
                         )
                 }
+                .disabled(isInteractive)
             }
 
             // Date filter chips (only shown when date is selected)
@@ -90,7 +105,14 @@ struct SearchBarView: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: selectedDate)
-        .padding(.horizontal)
+        .onAppear {
+            if isInteractive {
+                // A slight delay allows the overlay transition to complete.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    textFieldFocused = true
+                }
+            }
+        }
         .sheet(isPresented: $showDatePicker) {
             VStack(spacing: 20) {
                 HStack {
@@ -153,11 +175,11 @@ struct SearchBarView_Previews: PreviewProvider {
         VStack {
             SearchBarView(
                 searchText: .constant(""),
-                selectedDate: .constant(Date())
+                selectedDate: .constant(Date()), isInteractive: true
             )
             SearchBarView(
                 searchText: .constant("Morning Run"),
-                selectedDate: .constant(nil)
+                selectedDate: .constant(nil), isInteractive: true
             )
             Spacer()
         }

@@ -29,7 +29,14 @@ struct SampleView: View {
     /// The date selected to be filtered by.
     @State private var selectedDate: Date? = nil
 
+    /// Whether the Settings panel is showing.
     @State private var isShowingSettingsPanel = false
+
+    /// Whether the search overlay is active (3D pop).
+    @State private var isSearchBarActive = false
+
+    /// Matched geometry namespace for the search bar transition.
+    @Namespace private var searchBarNamespace
 
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager: HealthKitManager
@@ -78,31 +85,79 @@ struct SampleView: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                searchBarSection
-                    .padding(.vertical, 15)
-                tabContentSection
+            // 1) The main sheet content, blurred when the search overlay is active.
+            mainContent
+                .blur(radius: isSearchBarActive ? 20 : 0)
+
+            // 2) Floaitng search bar
+            if isSearchBarActive {
+                searchOverlay
+                    .zIndex(1)
+                    .transition(
+                        .asymmetric(
+                            insertion: .scale(scale: 1.0).combined(with: .opacity),
+                            removal: .opacity
+                        )
+                    )
             }
 
+            // 3) The settings overlay, if needed
             if isShowingSettingsPanel {
                 settingsOverlay
+                    .zIndex(2)
+                    .transition(.move(edge: .trailing))
             }
+        }
+        // A single, more “bouncy” spring animation for both states:
+        .animation(
+            .interactiveSpring(
+                response: 0.45, // how quickly the spring “responds”
+                dampingFraction: 0.65, // how bouncy vs. damped
+                blendDuration: 0.2
+            ),
+            value: isSearchBarActive || isShowingSettingsPanel
+        )
+    }
+
+    // MARK: - Main Content (Sheet)
+
+    /// The main content of the sheet, including a compact search bar, toggles, etc.
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            // A "compact" search bar in the sheet.
+            if !isSearchBarActive {
+                compactSearchBar
+                    .padding(.vertical, 15)
+            } else {
+                Color.clear.frame(height: 0)
+            }
+
+            // Main tab content section
+            tabContentSection
         }
     }
 
-    @ViewBuilder
-    private var searchBarSection: some View {
+    /// A compact search bar that sits in the sheet. When tapped, it triggers the overlay.
+    private var compactSearchBar: some View {
         HStack {
-            SearchBarView(searchText: $searchText, selectedDate: $selectedFilterDate)
-                .onChange(of: selectedFilterDate) { _ in
-                    onDateFilterChanged?()
+            SearchBarView(
+                searchText: $searchText,
+                selectedDate: $selectedDate, isInteractive: false
+            )
+            .matchedGeometryEffect(id: "SearchBar", in: searchBarNamespace)
+            .onChange(of: selectedFilterDate) { _, _ in
+                onDateFilterChanged?()
+            }
+            .onTapGesture {
+                withAnimation(.interactiveSpring(response: 0.45, dampingFraction: 0.65, blendDuration: 0.2)) {
+                    isSearchBarActive = true
                 }
+            }
 
-            Button(action: {
-                withAnimation {
-                    isShowingSettingsPanel.toggle()
-                }
-            }) {
+            // Gear button
+            Button {
+                isShowingSettingsPanel.toggle()
+            } label: {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.gray)
@@ -112,6 +167,94 @@ struct SampleView: View {
             }
         }
         .padding(.horizontal)
+    }
+
+    // MARK: Search Overlay
+
+    /// A “floating” overlay that appears with a 3D pop, showing a fully interactive search bar + results.
+    private var searchOverlay: some View {
+        ZStack(alignment: .top) {
+            // Dimmed background
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.interactiveSpring(response: 0.45, dampingFraction: 0.65, blendDuration: 0.2)) {
+                        isSearchBarActive = false
+                    }
+                }
+
+            // A floating card that holds the search bar + search results
+            VStack(spacing: 0) {
+                // The fully interactive search bar, matched geometry
+                SearchBarView(
+                    searchText: $searchText,
+                    selectedDate: $selectedFilterDate,
+                    isInteractive: true
+                )
+                .shadow(radius: 3, x: 0, y: 2)
+                .matchedGeometryEffect(id: "SearchBar", in: searchBarNamespace)
+                .padding(.top, 20)
+                .onChange(of: selectedFilterDate) { _ in
+                    onDateFilterChanged?()
+                }
+
+                Divider()
+                    .padding(.horizontal)
+                    .padding(.top, 5)
+
+                // The scrollable list of filtered items
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(filteredItems, id: \.self) { item in
+                            HStack {
+                                Circle()
+                                    .fill(colorForRoute(item))
+                                    .frame(width: 12, height: 12)
+
+                                Text(item)
+                                    .font(.system(size: 16, weight: .medium))
+
+                                Spacer()
+
+                                Text("Today")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(.systemGray6))
+                            )
+                            .shadow(radius: 3, x: 0, y: 2)
+                        }
+
+                        if filteredItems.isEmpty {
+                            Text("No routes found")
+                                .foregroundColor(.gray)
+                                .padding(.top, 40)
+                        }
+                    }
+                    .padding(.top, 8)
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 10)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .padding(.horizontal, 16)
+            .padding(.top, 60)
+            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+            // Slight 3D scale + rotation for the “pop” effect
+            .scaleEffect(1.03)
+            .rotation3DEffect(
+                .degrees(4),
+                axis: (x: 1, y: 0, z: 0),
+                anchor: .center,
+                perspective: 0.7
+            )
+        }
     }
 
     private var settingsOverlay: some View {
@@ -643,9 +786,9 @@ struct SampleView: View {
                 try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
 
                 // Use the main thread for UI updates
-                await MainActor.run {
+                Task { @MainActor in
                     // Load routes more efficiently
-                    healthKitManager.loadRoutes()
+                    await healthKitManager.loadRoutes()
 
                     // Update state
                     lastSyncTime = Date()
