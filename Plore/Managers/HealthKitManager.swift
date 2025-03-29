@@ -33,14 +33,14 @@ class HealthKitManager: ObservableObject {
     init() {
         Task {
             await requestHKPermissions()
-            loadRoutes()
+            await loadRoutes()
         }
     }
 
     /// 1) Check Core Data first. If data is present, load it and skip HK if you like.
     ///    Otherwise, fetch from HealthKit.
-    func loadRoutes() {
-        let cdWorkouts = coreDataManager.fetchAllWorkouts()
+    func loadRoutes() async {
+        let cdWorkouts = await coreDataManager.fetchAllWorkouts()
 
         if !cdWorkouts.isEmpty {
             processCoreDataWorkouts(cdWorkouts)
@@ -123,7 +123,7 @@ class HealthKitManager: ObservableObject {
 
                         for route in routes {
                             let simplified = simplifyRoute(locations: route, tolerance: 10)
-                            coreDataManager.addRoutePoints(simplified, to: cdWorkout, in: bgContext)
+                            coreDataManager.addRoutePoints(simplified, to: cdWorkout!, in: bgContext)
                         }
                     }
                 }
@@ -138,7 +138,7 @@ class HealthKitManager: ObservableObject {
 
                 print("[HealthKitManager] syncData() - ✅ Successfully synced \(newWorkouts.count) new workouts.")
 
-                let mainThreadWorkouts = coreDataManager.fetchAllWorkouts()
+                let mainThreadWorkouts = await coreDataManager.fetchAllWorkouts()
                 self.processCoreDataWorkouts(mainThreadWorkouts)
             } catch {
                 print("[HealthKitManager] syncData() - Failed to sync and fetch new workouts: \(error)")
@@ -235,7 +235,7 @@ class HealthKitManager: ObservableObject {
 
                         for route in routes {
                             let simplified = simplifyRoute(locations: route, tolerance: 10)
-                            coreDataManager.addRoutePoints(simplified, to: cdWorkout, in: bgContext)
+                            coreDataManager.addRoutePoints(simplified, to: cdWorkout!, in: bgContext)
                         }
                     }
                 } catch {
@@ -249,7 +249,7 @@ class HealthKitManager: ObservableObject {
                 print("❌ Error saving background context: \(error.localizedDescription)")
             }
 
-            let mainThreadWorkouts = coreDataManager.fetchAllWorkouts()
+            let mainThreadWorkouts = await coreDataManager.fetchAllWorkouts()
             self.processCoreDataWorkouts(mainThreadWorkouts)
         }
     }

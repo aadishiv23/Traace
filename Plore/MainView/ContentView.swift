@@ -76,10 +76,9 @@ struct ContentView: View {
             }) {
                 OpenAppView()
             }
-            .onAppear {
-                initializeView()
+            .task {
+                await initializeView()
             }
-
             .toolbar(.hidden, for: .navigationBar)
         }
     }
@@ -149,7 +148,6 @@ struct ContentView: View {
                 .frame(width: 44, height: 44)
                 .scaleEffect(isActive ? 1.1 : 1.0)
                 .symbolEffect(.bounce, value: isActive)
-
         }
         .contentShape(Rectangle())
     }
@@ -204,14 +202,14 @@ struct ContentView: View {
         filteredCyclingPolylines = filtered.cycling
     }
 
-    private func initializeView() {
+    private func initializeView() async {
         showExampleSheet = true
 
         Task(priority: .high) {
             await healthKitManager.requestHKPermissions()
         }
 
-        healthKitManager.loadRoutes()
+        await healthKitManager.loadRoutes()
 
         filteredWalkingPolylines = healthKitManager.walkingPolylines
         filteredRunningPolylines = healthKitManager.runningPolylines
