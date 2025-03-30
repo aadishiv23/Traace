@@ -36,7 +36,7 @@ struct SearchBarView: View {
 
                     TextField("Search routes", text: $searchText)
                         .font(.system(size: 16))
-                        .disabled(isInteractive)
+                        .disabled(!isInteractive)
                         .focused($textFieldFocused)
 
                     if !searchText.isEmpty {
@@ -69,7 +69,7 @@ struct SearchBarView: View {
                                 .fill(selectedDate != nil ? Color.blue.opacity(0.1) : Color(.systemGray6))
                         )
                 }
-                .disabled(isInteractive)
+                .disabled(!isInteractive)
             }
 
             // Date filter chips (only shown when date is selected)
@@ -158,7 +158,7 @@ struct SearchBarView: View {
                 .padding(.horizontal)
                 .padding(.bottom)
             }
-            .presentationDetents([.height(500)])
+            .presentationDetents([.medium, .height(500)])
             .presentationCornerRadius(20)
         }
     }
