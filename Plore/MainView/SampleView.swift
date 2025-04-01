@@ -632,9 +632,9 @@ struct SampleView: View {
     private var routeToggleSection: some View {
         HStack(spacing: 12) {
             // old cyberpunky style
-            routeToggleButton(title: "Walking", isOn: $showWalkingRoutes, color: .blue)
             routeToggleButton(title: "Running", isOn: $showRunningRoutes, color: .red)
             routeToggleButton(title: "Cycling", isOn: $showCyclingRoutes, color: .green)
+            routeToggleButton(title: "Walking", isOn: $showWalkingRoutes, color: .blue)
 
 //            ClaudeButton(
 //                "Walking",
