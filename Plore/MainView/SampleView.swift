@@ -722,55 +722,119 @@ struct SampleView: View {
 
     // MARK: - Helper Views
 
+    // MARK: - RouteCountCard
+
     private func routeCountCard(count: Int, title: String, color: Color) -> some View {
-        VStack {
+        VStack(spacing: 6) {
             Text("\(count)")
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 24, weight: .bold))
                 .foregroundColor(color)
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.25), value: count)
 
             Text(title)
-                .font(.caption)
-                .foregroundColor(.gray)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(Color.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(color.opacity(0.3), lineWidth: 1)
-                )
+            ZStack {
+                // Base surface
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(UIColor.systemBackground))
+
+                // Color tint overlay
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(color.opacity(0.08))
+
+                // Border
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(color.opacity(0.25), lineWidth: 1)
+            }
         )
+        // Simple, clean shadow
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        // Subtle scale animation on appearance
+        .onAppear {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                // Animation happens automatically
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(count) \(title)")
     }
+
+    // MARK: - RouteToggleButton
 
     private func routeToggleButton(title: String, isOn: Binding<Bool>, color: Color) -> some View {
         Button {
-            isOn.wrappedValue.toggle()
+            // Haptic feedback when pressed
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+
+            // Toggle with animation
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isOn.wrappedValue.toggle()
+            }
         } label: {
             VStack(spacing: 6) {
+                // Indicator dot
                 Circle()
                     .fill(isOn.wrappedValue ? color : Color.gray.opacity(0.3))
-                    .frame(width: 12, height: 12)
+                    .frame(width: 10, height: 10)
+                    // Subtle pulse animation when active
+                    .overlay(
+                        Circle()
+                            .stroke(isOn.wrappedValue ? color : Color.clear, lineWidth: 1.5)
+                            .scaleEffect(isOn.wrappedValue ? 1.5 : 1)
+                            .opacity(isOn.wrappedValue ? 0 : 1)
+                            .animation(
+                                isOn.wrappedValue
+                                    ? Animation.easeOut(duration: 0.8).repeatForever(autoreverses: true)
+                                    : .default,
+                                value: isOn.wrappedValue
+                            )
+                    )
 
+                // Label
                 Text(title)
-                    .font(.caption)
+                    .font(.system(size: 13, weight: isOn.wrappedValue ? .medium : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isOn.wrappedValue ? color.opacity(0.1) : Color(.systemGray6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(
-                                isOn.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2),
-                                lineWidth: 1
-                            )
-                    )
+                ZStack {
+                    // Base shape
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.systemBackground))
+
+                    // Color fill when active
+                    if isOn.wrappedValue {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(color.opacity(0.1))
+                    }
+
+                    // Border
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            isOn.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2),
+                            lineWidth: 1
+                        )
+                }
             )
+            // Simple shadow for depth
+            .shadow(color: Color.black.opacity(0.03), radius: 3, x: 0, y: 1)
+            // Scale down slightly when pressed
+            .scaleEffect(isOn.wrappedValue ? 1 : 0.97)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn.wrappedValue)
         }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(isOn.wrappedValue ? "On" : "Off")
+        .accessibilityHint("Double tap to toggle")
     }
 
     // MARK: - Helper Functions
