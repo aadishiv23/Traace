@@ -147,7 +147,7 @@ struct ContentView: View {
                 .foregroundStyle(isActive ? color : .gray)
                 .frame(width: 44, height: 44)
                 .scaleEffect(isActive ? 1.1 : 1.0)
-                .symbolEffect(.bounce, value: isActive)
+                .symbolEffect(.wiggle, value: isActive)
         }
         .contentShape(Rectangle())
     }

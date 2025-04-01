@@ -192,7 +192,7 @@ struct SampleView: View {
                     selectedDate: $selectedFilterDate,
                     isInteractive: true
                 )
-                .shadow(radius: 3, x: 0, y: 2)
+                .shadow(radius: 7, x: 0, y: 2)
                 .matchedGeometryEffect(id: "SearchBar", in: searchBarNamespace)
                 .padding(.top, 20)
                 .onChange(of: selectedFilterDate) { _ in
@@ -614,9 +614,9 @@ struct SampleView: View {
 
             // Summary counts
             HStack(spacing: 20) {
-                routeCountCard(count: healthKitManager.walkingRoutes.count, title: "Walking", color: .blue)
                 routeCountCard(count: healthKitManager.runningRoutes.count, title: "Running", color: .red)
                 routeCountCard(count: healthKitManager.cyclingRoutes.count, title: "Cycling", color: .green)
+                routeCountCard(count: healthKitManager.walkingRoutes.count, title: "Walking", color: .blue)
             }
 
             // Last sync info
