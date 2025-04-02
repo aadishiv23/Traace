@@ -97,7 +97,7 @@ final class CoreDataManager {
     func fetchOrCreateWorkout(from hkWorkout: HKWorkout, in context: NSManagedObjectContext) -> CDWorkout? {
         // pkey
         let workoutId = hkWorkout.uuid.uuidString
-        var resultWorkout: CDWorkout? = nil
+        var resultWorkout: CDWorkout?
 
         context.performAndWait { // ensure ops happen on correct context que
             let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
@@ -156,28 +156,102 @@ final class CoreDataManager {
         }
     }
 
-    // MARK: Fetch All Workouts from Core Data
+    /// **[NEW - Example]** Fetches specific route points for a given workout ID.
+    /// - Parameters:
+    ///   - workoutID: The UUID string of the CDWorkout.
+    ///   - context: The context to fetch from.
+    /// - Returns: An array of CDRoutePoint objects.
+    func fetchRoutePoints(for workoutID: String, context: NSManagedObjectContext) async -> [CDRoutePoint] {
+        let fetchContext = context
+        let request: NSFetchRequest<CDRoutePoint> = CDRoutePoint.fetchRequest()
+        // Filter points belonging to the specific workout
+        request.predicate = NSPredicate(format: "workout.id == %@", workoutID)
+        // Sort points by timestamp
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \CDRoutePoint.timestamp, ascending: true)]
 
-    /// Returns all workouts stored in Core Data (with prefetching routePoints if desired).
-    func fetchAllWorkouts(context: NSManagedObjectContext? = nil) async -> [CDWorkout] {
-        let fetchContext = context ?? mainContext
-        let request: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
-        // Optionally prefetch routePoints to avoid multiple round-trips:
-        request.relationshipKeyPathsForPrefetching = ["routePoints"]
-
-        // Optional: Sort descriptors if needed
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \CDWorkout.startDate, ascending: false)]
-
-        return await fetchContext.perform { // Use perform for async fetch
+        return await fetchContext.perform {
             do {
-                let workouts = try fetchContext.fetch(request)
-                self.logger.info("Fetched \(workouts.count) workouts from context.")
-                return workouts
+                let points = try fetchContext.fetch(request)
+                self.logger.info("Fetched \(points.count) route points for workout \(workoutID).")
+                return points
             } catch {
-                self.logger.error("❌ Failed to fetch workouts: \(error.localizedDescription)")
+                self.logger
+                    .error("❌ Failed to fetch route points for workout \(workoutID): \(error.localizedDescription)")
                 return []
             }
         }
+    }
+
+    // MARK: Fetching (Refined/Added Methods)
+
+    /// **[REFINED]** Fetches CDWorkout objects from Core Data based on optional criteria.
+    /// Performs fetch asynchronously on the specified context's queue.
+    /// - Parameters:
+    ///   - predicate: An NSPredicate to filter the results.
+    ///   - sortDescriptors: An array of NSSortDescriptors to sort the results.
+    ///   - fetchLimit: The maximum number of objects to return (0 for no limit).
+    ///   - context: The NSManagedObjectContext to perform the fetch on (defaults to mainContext).
+    /// - Returns: An array of CDWorkout objects matching the criteria.
+    func fetchWorkouts(
+        predicate: NSPredicate? = nil,
+        sortDescriptors: [NSSortDescriptor]? = nil,
+        fetchLimit: Int = 0, // Added fetchLimit parameter
+        context: NSManagedObjectContext? = nil
+    ) async -> [CDWorkout] {
+        let fetchContext = context ?? mainContext
+        let request: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
+
+        request.predicate = predicate
+        request.sortDescriptors = sortDescriptors
+        request.fetchLimit = fetchLimit
+
+        // Always prefetch routePoints for efficiency when accessing them later
+        request.relationshipKeyPathsForPrefetching = ["routePoints"]
+
+        // Use perform for safe asynchronous fetching on the context's queue
+        return await fetchContext.perform {
+            do {
+                let workouts = try fetchContext.fetch(request)
+                self.logger.info("Fetched \(workouts.count) workouts matching criteria.")
+                return workouts
+            } catch {
+                self.logger.error("❌ Failed to fetch workouts with criteria: \(error.localizedDescription)")
+                return []
+            }
+        }
+    }
+
+    // MARK: Fetch All Workouts from Core Data
+
+    // Returns all workouts stored in Core Data (with prefetching routePoints if desired).
+//    func fetchAllWorkouts(context: NSManagedObjectContext? = nil) async -> [CDWorkout] {
+//        let fetchContext = context ?? mainContext
+//        let request: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
+//        // Optionally prefetch routePoints to avoid multiple round-trips:
+//        request.relationshipKeyPathsForPrefetching = ["routePoints"]
+//
+//        // Optional: Sort descriptors if needed
+//        request.sortDescriptors = [NSSortDescriptor(keyPath: \CDWorkout.startDate, ascending: false)]
+//
+//        return await fetchContext.perform { // Use perform for async fetch
+//            do {
+//                let workouts = try fetchContext.fetch(request)
+//                self.logger.info("Fetched \(workouts.count) workouts from context.")
+//                return workouts
+//            } catch {
+//                self.logger.error("❌ Failed to fetch workouts: \(error.localizedDescription)")
+//                return []
+//            }
+//        }
+//    }
+
+    /// **[ORIGINAL - Kept for reference/convenience]** Returns all workouts stored in Core Data.
+    /// Uses the refined `fetchWorkouts` internally.
+    func fetchAllWorkouts(context: NSManagedObjectContext? = nil) async -> [CDWorkout] {
+        // Default sort: newest first
+        let defaultSort = [NSSortDescriptor(keyPath: \CDWorkout.startDate, ascending: false)]
+        // Call the more generic fetch function
+        return await fetchWorkouts(sortDescriptors: defaultSort, context: context)
     }
 
     func clearAllData() async {
