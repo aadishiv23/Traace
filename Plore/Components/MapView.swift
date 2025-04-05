@@ -46,16 +46,20 @@ struct MapView: View {
     // MARK: - Body
     
     var body: some View {
-        Map(coordinateRegion: $region, interactionModes: .all, showsUserLocation: true, userTrackingMode: nil, annotationItems: []) { _ in
-            // No annotations for now
-        }
+        // Use the Map initializer that doesn't require annotationItems
+        Map(coordinateRegion: $region, 
+            interactionModes: .all, 
+            showsUserLocation: true, 
+            userTrackingMode: nil // Set to .follow or .followWithHeading if needed
+        )
         .overlay {
             MapOverlay(routes: routes)
         }
-        .onChange(of: region) { _, _ in
-            // When region changes from user interaction, update isInteracting
-            isInteracting = true
-        }
+        // Remove .onChange for MKCoordinateRegion as it's not Equatable
+        // If interaction detection is needed, it must be handled differently (e.g., via delegate)
+        // .onChange(of: region) { _, _ in
+        //     isInteracting = true 
+        // }
         .mapStyle(mapType == .standard ? .standard : (mapType == .satellite ? .imagery : .hybrid))
     }
 }

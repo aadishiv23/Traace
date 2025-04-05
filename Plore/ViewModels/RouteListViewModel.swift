@@ -93,14 +93,16 @@ class RouteListViewModel: ObservableObject {
     // MARK: - Private Properties
     
     /// The HealthKit manager instance
-    private let healthKitManager = HealthKitManager.shared
+    private let healthKitManager: MVVMHealthKitManager
     
     /// Cancellables for Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
-    init() {
+    init(healthKitManager: MVVMHealthKitManager = MVVMHealthKitManager.shared) {
+        self.healthKitManager = healthKitManager
+        
         // Load initial data
         Task {
             await loadRoutes()

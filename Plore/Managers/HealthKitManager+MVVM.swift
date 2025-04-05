@@ -11,11 +11,11 @@ import MapKit
 import os
 
 /// Manager class for interacting with HealthKit in the MVVM architecture
-class HealthKitManager {
+class MVVMHealthKitManager {
     // MARK: - Singleton
     
     /// Shared instance
-    static let shared = HealthKitManager()
+    static let shared = MVVMHealthKitManager()
     
     // MARK: - Properties
     
@@ -25,7 +25,7 @@ class HealthKitManager {
     /// Logger for operations
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "com.aadishivmalhotra.Plore",
-        category: "HealthKitManager"
+        category: "MVVMHealthKitManager"
     )
     
     // MARK: - Initialization
@@ -84,7 +84,19 @@ class HealthKitManager {
         
         // Create the workout query
         let workoutPredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
-        let workoutActivityPredicate = HKQuery.predicateForWorkouts(with: [.walking, .running, .cycling, .hiking])
+        
+        // Use individual workout activity type predicates and combine them
+        let walkingPredicate = HKQuery.predicateForWorkouts(with: .walking)
+        let runningPredicate = HKQuery.predicateForWorkouts(with: .running)
+        let cyclingPredicate = HKQuery.predicateForWorkouts(with: .cycling)
+        let hikingPredicate = HKQuery.predicateForWorkouts(with: .hiking)
+        
+        // Combine all activity type predicates with OR
+        let workoutActivityPredicate = NSCompoundPredicate(orPredicateWithSubpredicates: [
+            walkingPredicate, runningPredicate, cyclingPredicate, hikingPredicate
+        ])
+        
+        // Combine date and activity predicates with AND
         let routesPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [workoutPredicate, workoutActivityPredicate])
         
         // Query workouts
@@ -206,36 +218,3 @@ class HealthKitManager {
         }
     }
 }
-
-// MARK: - Errors
-
-/// Errors that can occur during HealthKit operations
-enum HealthKitError: Error {
-    case notAvailable
-    case notAuthorized
-    case dataTypeMismatch
-    case queryFailed
-    case noRoutesFound
-    case dataProcessingFailed
-}
-
-// MARK: - Error Localization
-
-extension HealthKitError: LocalizedError {
-    var errorDescription: String? {
-        switch self {
-        case .notAvailable:
-            return "HealthKit is not available on this device."
-        case .notAuthorized:
-            return "Not authorized to access HealthKit data."
-        case .dataTypeMismatch:
-            return "Data type mismatch in HealthKit query."
-        case .queryFailed:
-            return "HealthKit query failed."
-        case .noRoutesFound:
-            return "No routes found for this workout."
-        case .dataProcessingFailed:
-            return "Failed to process HealthKit data."
-        }
-    }
-} 

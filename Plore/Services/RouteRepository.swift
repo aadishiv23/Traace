@@ -110,10 +110,10 @@ class RouteRepository {
             let sortedPoints = routePoints.sorted { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) }
             
             // Convert to CLLocation array
-            let locations = sortedPoints.map { 
+            let locations = sortedPoints.map {
+                
                 CLLocation(
-                    latitude: $0.latitude,
-                    longitude: $0.longitude,
+                    coordinate: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude),
                     altitude: 0,
                     horizontalAccuracy: 0,
                     verticalAccuracy: 0,
@@ -181,7 +181,7 @@ class RouteRepository {
             return false
         }
         
-        logger.info("Starting sync with HealthKit since \(lastSyncDate)")
+        logger.info("Starting sync with HealthKit since \(self.lastSyncDate)")
         
         // Fetch workouts from HealthKit since last sync date
         let newWorkouts = try await healthKitService.fetchWorkouts(since: lastSyncDate)

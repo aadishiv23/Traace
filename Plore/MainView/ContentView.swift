@@ -14,28 +14,23 @@ import SwiftUI
 struct ContentView: View {
     // MARK: Properties
 
-    /// Controls when the SampleView sheet is shown.
-    @State private var showExampleSheet = false
+    // ViewModels
+    @StateObject private var mapViewModel = MapViewModel()
+    @StateObject private var routeListViewModel = RouteListViewModel()
+
+    /// Controls when the RouteListView sheet is shown.
+    @State private var showRouteListSheet = false
 
     /// Controls when the OpenAppView sheet is shown.
     @State private var showOpenAppSheet = false
 
-    /// Controls navigation to the NoteView.
+    /// Controls navigation to the NoteView (Aqua).
     @State private var navigateToNote = false
 
     @State private var navigateToPetal = false
 
-    /// Tracks if ExampleSheet was dismissed when navigating away.
-    @State private var wasExampleSheetDismissed = false
-
-    /// Tracks if walking routes should be shown.
-    @State private var showWalkingRoutes = true
-
-    /// Tracks if running routes should be shown.
-    @State private var showRunningRoutes = true
-
-    /// Tracks if cycling routes should be shown
-    @State private var showCyclingRoutes = true
+    /// Tracks if RouteListView was dismissed when navigating away.
+    @State private var wasRouteListSheetDismissed = false
 
     /// Track the user's selected time interval.
     @State private var selectedSyncInterval: TimeInterval = 3600
@@ -53,11 +48,17 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                mapOverlay
+                MapView(
+                    routes: mapViewModel.displayableRoutes,
+                    region: $mapViewModel.mapRegion,
+                    mapType: .standard
+                )
+                .edgesIgnoringSafeArea(.all)
+
+                clearZoomButtonOverlay
 
                 controlButtons
 
-                // Hidden navigation link for programmatic navigation.
                 NavigationLink(
                     destination: Aqua(),
                     isActive: $navigateToNote
@@ -65,14 +66,12 @@ struct ContentView: View {
                     EmptyView()
                 }
             }
-            // Primary sheet – SampleView.
-            .sheet(isPresented: $showExampleSheet) {
-                sampleSheetContent
+            .sheet(isPresented: $showRouteListSheet) {
+                routeListSheetContent
             }
 
-            // Secondary sheet – OpenAppView.
             .sheet(isPresented: $showOpenAppSheet, onDismiss: {
-                showExampleSheet = true
+                showRouteListSheet = true
             }) {
                 OpenAppView()
             }
@@ -80,76 +79,53 @@ struct ContentView: View {
                 await initializeView()
             }
             .toolbar(.hidden, for: .navigationBar)
+            .onAppear(perform: setupViewModelCommunication)
         }
     }
 
     // MARK: Subviews
 
-    /// Map overlay.
-    private var mapOverlay: some View {
-        Map {
-            if showWalkingRoutes {
-                ForEach(filteredWalkingPolylines, id: \.self) {
-                    MapPolyline($0).stroke(Color.blue, lineWidth: 3)
+    /// Overlay button to clear the map zoom when a route is focused
+    @ViewBuilder
+    private var clearZoomButtonOverlay: some View {
+        if mapViewModel.zoomedRouteID != nil {
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        routeListViewModel.clearSelectedRoute()
+                    } label: {
+                        Label("Show All Routes", systemImage: "arrow.up.left.and.down.right.magnifyingglass")
+                            .padding(8)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .shadow(radius: 3)
+                    }
+                    .padding(.top, 60)
+                    .padding(.trailing)
                 }
-            }
-            if showRunningRoutes {
-                ForEach(filteredRunningPolylines, id: \.self) {
-                    MapPolyline($0).stroke(Color.red, lineWidth: 3)
-                }
-            }
-            if showCyclingRoutes {
-                ForEach(filteredCyclingPolylines, id: \.self) {
-                    MapPolyline($0).stroke(Color.green, lineWidth: 3)
-                }
+                Spacer()
             }
         }
-        .edgesIgnoringSafeArea(.all)
     }
 
-    /// Control button overlay.
+    /// Control button overlay
     private var controlButtons: some View {
         VStack {
             Spacer()
             HStack {
-                VStack(spacing: 0) {
-                    routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: .red)
-                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                    routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: .green)
-                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                    routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: .blue)
-                }
-                .frame(width: 50)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .padding(.leading, 10)
-                .padding(.bottom, 360)
-                .shadow(radius: 5)
-
                 Spacer()
             }
-
             Spacer()
         }
     }
 
     @ViewBuilder
-    private func routeToggleButton(icon: String, isOn: Binding<Bool>, color: Color) -> some View {
-        let isActive = isOn.wrappedValue
-
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                isOn.wrappedValue.toggle()
-            }
-        } label: {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(isActive ? color : .gray)
-                .frame(width: 44, height: 44)
-                .scaleEffect(isActive ? 1.1 : 1.0)
-                .symbolEffect(.wiggle, value: isActive)
-        }
-        .contentShape(Rectangle())
+    private var routeListSheetContent: some View {
+        RouteListView(viewModel: routeListViewModel)
+            .presentationDetents([.medium, .large])
+            .presentationCornerRadius(20)
+            .presentationBackgroundInteraction(.enabled)
+            .interactiveDismissDisabled()
     }
 
     // MARK: Vars
@@ -166,15 +142,15 @@ struct ContentView: View {
                 updateFilteredRoutes()
             },
             onNoteTap: {
-                showExampleSheet = false
-                wasExampleSheetDismissed = true
+                showRouteListSheet = false
+                wasRouteListSheetDismissed = true
                 DispatchQueue.main.async {
                     showOpenAppSheet = true
                 }
             },
             onPetalTap: {
-                showExampleSheet = false
-                wasExampleSheetDismissed = true
+                showRouteListSheet = false
+                wasRouteListSheetDismissed = true
                 DispatchQueue.main.async {
                     navigateToNote = true
                 }
@@ -202,27 +178,51 @@ struct ContentView: View {
         filteredCyclingPolylines = filtered.cycling
     }
 
-    private func initializeView() async {
-        showExampleSheet = true
+    private func setupViewModelCommunication() {
+        guard routeListViewModel.onFilterChange == nil else { return }
 
-        Task(priority: .high) {
-            await healthKitManager.requestHKPermissions()
+        print("Setting up ViewModel communication closures.")
+
+        routeListViewModel.onFilterChange = { [weak mapViewModel] criteria in
+            print("ContentView: Filter change triggered")
+            mapViewModel?.applyFilters(criteria)
         }
 
-        await healthKitManager.loadRoutes()
+        routeListViewModel.onRouteSelect = { [weak mapViewModel] routeId in
+            print("ContentView: Route selection triggered for ID: \(routeId)")
+            mapViewModel?.zoomToRoute(id: routeId)
+        }
 
-        filteredWalkingPolylines = healthKitManager.walkingPolylines
-        filteredRunningPolylines = healthKitManager.runningPolylines
-        filteredCyclingPolylines = healthKitManager.cyclingPolylines
+        routeListViewModel.onClearZoom = { [weak mapViewModel] in
+            print("ContentView: Clear zoom triggered")
+            mapViewModel?.clearZoom()
+        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            print("📍 Walking Routes: \(healthKitManager.walkingRoutes.count)")
-            print("📍 Running Routes: \(healthKitManager.runningRoutes.count)")
-            print("📍 Cycling Routes: \(healthKitManager.cyclingRoutes.count)")
-            updateFilteredRoutes()
+        routeListViewModel.onNoteTap = { [weak self] in
+            print("ContentView: Note tap triggered")
+            self?.showRouteListSheet = false
+            self?.wasRouteListSheetDismissed = true
+        }
+
+        routeListViewModel.onPetalTap = { [weak self] in
+            print("ContentView: Petal tap triggered")
+            self?.showRouteListSheet = false
+            self?.wasRouteListSheetDismissed = true
+            self?.navigateToPetal = true
         }
     }
 
+    private func initializeView() async {
+        print("ContentView: Initializing view...")
+        showRouteListSheet = true
+
+        async let mapLoad: () = mapViewModel.loadRoutes()
+        async let listLoad: () = routeListViewModel.loadRoutes()
+
+        _ = await [mapLoad, listLoad]
+
+        print("ContentView: Initial data loading complete.")
+    }
 }
 
 // MARK: - Helper Components

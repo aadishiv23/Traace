@@ -42,8 +42,8 @@ class MapViewModel: ObservableObject {
     
     // MARK: - Private Properties
     
-    /// The HealthKit manager for data access
-    private let healthKitManager = HealthKitManager.shared
+    /// Reference to the HealthKitManager+MVVM for data access
+    private let healthKitManager: MVVMHealthKitManager
     
     /// All routes loaded from HealthKit (before filtering)
     private var allRoutes: [WorkoutRoute] = []
@@ -53,7 +53,9 @@ class MapViewModel: ObservableObject {
     
     // MARK: - Initialization
     
-    init() {
+    init(healthKitManager: MVVMHealthKitManager = MVVMHealthKitManager.shared) {
+        self.healthKitManager = healthKitManager
+        
         // Set up automatic reloading when filters change
         $activeFilters
             .dropFirst() // Skip initial value
@@ -105,7 +107,7 @@ class MapViewModel: ObservableObject {
     /// - Parameter newFilters: The new filter criteria to apply
     func applyFilters(_ newFilters: FilterCriteria) {
         // Clear zoomed route when applying new filters
-        zoomedRouteID = nil
+        // zoomedRouteID = nil // Keep zoom active even if filters change for now, clearZoom handles this explicitly
         
         // Update active filters
         activeFilters = newFilters
@@ -116,7 +118,15 @@ class MapViewModel: ObservableObject {
     
     /// Applies the current filter settings to the loaded routes
     private func applyCurrentFilters() {
-        // Start with all routes
+        // If zoomed to a specific route, only show that route
+        if let zoomedID = zoomedRouteID, let routeToShow = allRoutes.first(where: { $0.id == zoomedID }) {
+            self.displayableRoutes = [routeToShow]
+            // Don't fit map here, zoomToRoute handles the initial fit.
+            // Subsequent filter changes while zoomed shouldn't re-fit map unless zoom is cleared.
+            return // Stop here if zoomed
+        }
+
+        // --- Start with all routes if not zoomed ---
         var filtered = allRoutes
         
         // Filter by activity type
@@ -140,23 +150,15 @@ class MapViewModel: ObservableObject {
             }
         }
         
-        // If zoomed to a specific route, only show that route
-        if let zoomedID = zoomedRouteID {
-            filtered = filtered.filter { $0.id == zoomedID }
-        }
-        
         // Update displayable routes
         self.displayableRoutes = filtered
         
-        // Update map region
+        // Update map region to fit filtered routes (only if not zoomed)
         if !filtered.isEmpty {
-            if zoomedRouteID != nil, let route = filtered.first {
-                // If zoomed to a route, focus on that one
-                fitMapToRoute(route)
-            } else {
-                // Otherwise fit the map to show all routes
-                fitMapToRoutes(filtered)
-            }
+             fitMapToRoutes(filtered)
+        } else {
+             // Handle empty state? Maybe reset to a default region?
+             // For now, do nothing, keep the last region.
         }
     }
     
@@ -168,14 +170,19 @@ class MapViewModel: ObservableObject {
         // Set the zoomed route ID
         zoomedRouteID = id
         
-        // Find the route in our cached routes
+        // Find the route in our *master* list of routes
         if let route = allRoutes.first(where: { $0.id == id }) {
+            // Directly set this as the only displayable route
+            self.displayableRoutes = [route]
             // Update the map region to fit this route
             fitMapToRoute(route)
+        } else {
+             // Handle case where route ID is not found (shouldn't normally happen)
+             print("Error: Zoomed route ID \(id) not found in allRoutes.")
+             // Optionally clear zoom or display an error
+             clearZoom() // Revert to showing all filtered routes
         }
-        
-        // Re-apply filters to update the display
-        applyCurrentFilters()
+        // No need to call applyCurrentFilters() here, as we've manually set displayableRoutes and region
     }
     
     /// Clears the zoomed route and shows all routes again
@@ -183,7 +190,7 @@ class MapViewModel: ObservableObject {
         // Clear the zoomed route ID
         zoomedRouteID = nil
         
-        // Re-apply filters
+        // Re-apply filters to show the relevant set of routes again
         applyCurrentFilters()
     }
     
