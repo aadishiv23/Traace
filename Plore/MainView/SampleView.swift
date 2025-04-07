@@ -127,7 +127,8 @@ struct SampleView: View {
             // A "compact" search bar in the sheet.
             if !isSearchBarActive {
                 compactSearchBar
-                    .padding(.vertical, 15)
+                    .padding(.top, 15)
+                    .padding(.bottom, 5)
             } else {
                 Color.clear.frame(height: 0)
             }
@@ -192,7 +193,7 @@ struct SampleView: View {
                     selectedDate: $selectedFilterDate,
                     isInteractive: true
                 )
-                .shadow(radius: 7, x: 0, y: 2)
+                .shadow(radius: 3, x: 0, y: 2)
                 .matchedGeometryEffect(id: "SearchBar", in: searchBarNamespace)
                 .padding(.top, 20)
                 .onChange(of: selectedFilterDate) { _ in
@@ -245,7 +246,7 @@ struct SampleView: View {
             .cornerRadius(16)
             .padding(.horizontal, 16)
             .padding(.top, 60)
-            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 5)
             // Slight 3D scale + rotation for the “pop” effect
             .scaleEffect(1.03)
             .rotation3DEffect(
