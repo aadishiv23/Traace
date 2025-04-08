@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import HealthKit
 
 // MARK: - SampleView (Main Bottom Sheet)
 
@@ -60,6 +61,10 @@ struct SampleView: View {
 
     let sampleData = ["Running Route", "Walking Route", "Cycling Route"] // Placeholder data
 
+    @State private var filteredRoutes: [RouteInfo] = []
+    @State private var isEditingRouteName: UUID? = nil
+    @State private var editingName: String = ""
+
     /// Tab sections
     enum TabSection: String, CaseIterable {
         case routes = "Routes"
@@ -89,7 +94,7 @@ struct SampleView: View {
             mainContent
                 .blur(radius: isSearchBarActive ? 20 : 0)
 
-            // 2) Floaitng search bar
+            // 2) Floating search bar
             if isSearchBarActive {
                 searchOverlay
                     .zIndex(1)
@@ -108,10 +113,10 @@ struct SampleView: View {
                     .transition(.move(edge: .trailing))
             }
         }
-        // A single, more “bouncy” spring animation for both states:
+        // A single, more "bouncy" spring animation for both states:
         .animation(
             .interactiveSpring(
-                response: 0.45, // how quickly the spring “responds”
+                response: 0.45, // how quickly the spring "responds"
                 dampingFraction: 0.65, // how bouncy vs. damped
                 blendDuration: 0.2
             ),
@@ -172,7 +177,7 @@ struct SampleView: View {
 
     // MARK: Search Overlay
 
-    /// A “floating” overlay that appears with a 3D pop, showing a fully interactive search bar + results.
+    /// A "floating" overlay that appears with a 3D pop, showing a fully interactive search bar + results.
     private var searchOverlay: some View {
         ZStack(alignment: .top) {
             // Dimmed background
@@ -247,7 +252,7 @@ struct SampleView: View {
             .padding(.horizontal, 16)
             .padding(.top, 60)
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 5)
-            // Slight 3D scale + rotation for the “pop” effect
+            // Slight 3D scale + rotation for the "pop" effect
             .scaleEffect(1.03)
             .rotation3DEffect(
                 .degrees(4),
@@ -304,9 +309,13 @@ struct SampleView: View {
         .zIndex(1)
     }
 
-    @ViewBuilder
+    /// The tab content section for the main views.
     private var tabContentSection: some View {
-        routesTabContent
+        VStack(spacing: 0) {
+            // SECTION: Routes list
+            routesTabContent
+        }
+        .padding(.top, 10)
     }
 
     // MARK: - Tab Contents
@@ -613,11 +622,26 @@ struct SampleView: View {
                 .opacity(isSyncing ? 0.7 : 1.0)
             }
 
-            // Summary counts
+            // Summary counts with improved styling
             HStack(spacing: 20) {
-                routeCountCard(count: healthKitManager.runningRoutes.count, title: "Running", color: .red)
-                routeCountCard(count: healthKitManager.cyclingRoutes.count, title: "Cycling", color: .green)
-                routeCountCard(count: healthKitManager.walkingRoutes.count, title: "Walking", color: .blue)
+                routeCountCard(
+                    count: healthKitManager.runningRoutes.count,
+                    title: "Running",
+                    color: .red,
+                    icon: "figure.run"
+                )
+                routeCountCard(
+                    count: healthKitManager.cyclingRoutes.count,
+                    title: "Cycling",
+                    color: .green,
+                    icon: "figure.outdoor.cycle"
+                )
+                routeCountCard(
+                    count: healthKitManager.walkingRoutes.count,
+                    title: "Walking",
+                    color: .blue,
+                    icon: "figure.walk"
+                )
             }
 
             // Last sync info
@@ -632,103 +656,131 @@ struct SampleView: View {
 
     private var routeToggleSection: some View {
         HStack(spacing: 12) {
-            // old cyberpunky style
-            routeToggleButton(title: "Running", isOn: $showRunningRoutes, color: .red)
-            routeToggleButton(title: "Cycling", isOn: $showCyclingRoutes, color: .green)
-            routeToggleButton(title: "Walking", isOn: $showWalkingRoutes, color: .blue)
-
-//            ClaudeButton(
-//                "Walking",
-//                color: ClaudeButtonColor.blue,
-//                size: .small,
-//                rounded: true,
-//                icon: nil,
-//                style: .modernAqua
-//            ) {
-//                $showWalkingRoutes.wrappedValue.toggle()
-//            }
-//            .opacity($showWalkingRoutes.wrappedValue ? 1.0 : 0.5)
-//
-//            Spacer()
-//
-//            ClaudeButton(
-//                "Running",
-//                color: ClaudeButtonColor.red,
-//                size: .small,
-//                rounded: true,
-//                icon: nil,
-//                style: .modernAqua
-//            ) {
-//                $showRunningRoutes.wrappedValue.toggle()
-//            }
-//            .opacity($showRunningRoutes.wrappedValue ? 1.0 : 0.5)
-//
-//            Spacer()
-//
-//            ClaudeButton(
-//                "Cycling",
-//                color: ClaudeButtonColor.green,
-//                size: .small,
-//                rounded: true,
-//                icon: nil,
-//                style: .modernAqua
-//            ) {
-//                $showCyclingRoutes.wrappedValue.toggle()
-//            }
-//            .opacity($showCyclingRoutes.wrappedValue ? 1.0 : 0.5)
+            // Streamlined, more elegant toggle buttons
+            routeToggleButton(
+                title: "Running",
+                isOn: $showRunningRoutes,
+                color: .red,
+                icon: "figure.run"
+            )
+            routeToggleButton(
+                title: "Cycling",
+                isOn: $showCyclingRoutes,
+                color: .green,
+                icon: "figure.outdoor.cycle"
+            )
+            routeToggleButton(
+                title: "Walking",
+                isOn: $showWalkingRoutes,
+                color: .blue,
+                icon: "figure.walk"
+            )
         }
     }
 
     private var routeListSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Recent Routes")
-                .font(.headline)
-
-            if !filteredItems.isEmpty {
-                VStack(spacing: 10) {
-                    ForEach(filteredItems, id: \.self) { item in
-                        HStack {
-                            Circle()
-                                .fill(colorForRoute(item))
-                                .frame(width: 12, height: 12)
-
-                            Text(item)
-                                .font(.system(size: 16, weight: .medium))
-
-                            Spacer()
-
-                            Text("Today")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(.systemGray6))
+        VStack(spacing: 10) {
+            // Title and count
+            HStack {
+                Text("Routes")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Text("\(filteredRoutes.count) routes")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+            }
+            
+            // Routes list - Improved from original design
+            if filteredRoutes.isEmpty {
+                emptyRoutesView
+            } else {
+                LazyVStack(spacing: 16) {
+                    ForEach(filteredRoutes) { route in
+                        EnhancedRouteRow(
+                            route: route,
+                            isEditing: isEditingRouteName == route.id,
+                            editingName: $editingName,
+                            onEditComplete: {
+                                if !editingName.isEmpty {
+                                    healthKitManager.updateRouteName(id: route.id, newName: editingName)
+                                }
+                                isEditingRouteName = nil
+                            },
+                            onEditStart: {
+                                editingName = route.name ?? ""
+                                isEditingRouteName = route.id
+                            }
                         )
                     }
                 }
-            } else {
-                Text("No routes found")
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(.systemGray6))
-                    )
+                .padding(.top, 8)
             }
         }
+        .onAppear {
+            updateFilteredRoutes()
+        }
+        .onChange(of: selectedFilterDate) { _, _ in
+            updateFilteredRoutes()
+        }
+        .onChange(of: showWalkingRoutes) { _, _ in
+            updateFilteredRoutes()
+        }
+        .onChange(of: showRunningRoutes) { _, _ in
+            updateFilteredRoutes()
+        }
+        .onChange(of: showCyclingRoutes) { _, _ in
+            updateFilteredRoutes()
+        }
+    }
+    
+    private var emptyRoutesView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+                .frame(height: 20)
+            
+            Image(systemName: "map")
+                .font(.system(size: 48))
+                .foregroundColor(.gray.opacity(0.6))
+            
+            Text("No routes found")
+                .font(.title3)
+                .fontWeight(.medium)
+            
+            if selectedFilterDate != nil {
+                Text("Try selecting a different date or adjusting your filters")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            } else {
+                Text("Start a workout to see your routes here")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+                .frame(height: 24)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
     }
 
     // MARK: - Helper Views
 
     // MARK: - RouteCountCard
 
-    private func routeCountCard(count: Int, title: String, color: Color) -> some View {
-        VStack(spacing: 6) {
+    private func routeCountCard(count: Int, title: String, color: Color, icon: String) -> some View {
+        VStack(spacing: 8) {
+            // Icon above the count
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(color)
+            
             Text("\(count)")
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundColor(color)
                 .contentTransition(.numericText())
                 .animation(.spring(response: 0.25), value: count)
@@ -738,19 +790,19 @@ struct SampleView: View {
                 .foregroundColor(Color.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
+        .padding(.vertical, 12)
         .background(
             ZStack {
                 // Base surface
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color(UIColor.systemBackground))
 
                 // Color tint overlay
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(color.opacity(0.08))
 
                 // Border
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(color.opacity(0.25), lineWidth: 1)
             }
         )
@@ -768,7 +820,7 @@ struct SampleView: View {
 
     // MARK: - RouteToggleButton
 
-    private func routeToggleButton(title: String, isOn: Binding<Bool>, color: Color) -> some View {
+    private func routeToggleButton(title: String, isOn: Binding<Bool>, color: Color, icon: String) -> some View {
         Button {
             // Haptic feedback when pressed
             let generator = UIImpactFeedbackGenerator(style: .light)
@@ -780,27 +832,20 @@ struct SampleView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                // Indicator dot
-                Circle()
-                    .fill(isOn.wrappedValue ? color : Color.gray.opacity(0.3))
-                    .frame(width: 10, height: 10)
-                    // Subtle pulse animation when active
-                    .overlay(
-                        Circle()
-                            .stroke(isOn.wrappedValue ? color : Color.clear, lineWidth: 1.5)
-                            .scaleEffect(isOn.wrappedValue ? 1.5 : 1)
-                            .opacity(isOn.wrappedValue ? 0 : 1)
-                            .animation(
-                                isOn.wrappedValue
-                                    ? Animation.easeOut(duration: 0.8).repeatForever(autoreverses: true)
-                                    : .default,
-                                value: isOn.wrappedValue
-                            )
-                    )
+                // Icon with circle background
+                ZStack {
+                    Circle()
+                        .fill(isOn.wrappedValue ? color.opacity(0.2) : Color.gray.opacity(0.1))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: isOn.wrappedValue ? .bold : .regular))
+                        .foregroundColor(isOn.wrappedValue ? color : .gray)
+                }
 
                 // Label
                 Text(title)
-                    .font(.system(size: 13, weight: isOn.wrappedValue ? .medium : .regular))
+                    .font(.system(size: 12, weight: isOn.wrappedValue ? .medium : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
             }
             .frame(maxWidth: .infinity)
@@ -808,17 +853,17 @@ struct SampleView: View {
             .background(
                 ZStack {
                     // Base shape
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(Color(UIColor.systemBackground))
 
                     // Color fill when active
                     if isOn.wrappedValue {
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 16)
                             .fill(color.opacity(0.1))
                     }
 
                     // Border
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 16)
                         .strokeBorder(
                             isOn.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2),
                             lineWidth: 1
@@ -951,6 +996,181 @@ struct SampleView: View {
         default: "mappin"
         }
     }
+
+    /// Updates the filtered routes based on selection criteria
+    private func updateFilteredRoutes() {
+        // Get all routes based on date filter
+        var routeInfos = healthKitManager.getAllRouteInfosByDate(date: selectedFilterDate)
+        
+        // Apply activity type filters
+        routeInfos = routeInfos.filter { route in
+            switch route.type {
+            case .walking:
+                return showWalkingRoutes
+            case .running:
+                return showRunningRoutes
+            case .cycling:
+                return showCyclingRoutes
+            default:
+                return false
+            }
+        }
+        
+        // Apply text search if needed
+        if !searchText.isEmpty {
+            routeInfos = routeInfos.filter { route in
+                let name = route.name ?? "Unknown Route"
+                return name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Sort by date, newest first
+        routeInfos.sort { $0.date > $1.date }
+        
+        filteredRoutes = routeInfos
+    }
+}
+
+// MARK: - Filter Pill
+
+/// A pill-style filter button for route types.
+struct FilterPill: View {
+    @Binding var isSelected: Bool
+    let label: String
+    let icon: String
+    let color: Color
+    var onToggle: (() -> Void)?
+    
+    var body: some View {
+        Button {
+            isSelected.toggle()
+            onToggle?()
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                
+                Text(label)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(isSelected ? color.opacity(0.2) : Color.gray.opacity(0.1))
+            .foregroundColor(isSelected ? color : .gray)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? color : Color.clear, lineWidth: 1)
+            )
+        }
+    }
+}
+
+// MARK: - Route Row
+
+/// A row displaying a route's information with editable name.
+struct RouteRow: View {
+    let route: RouteInfo
+    let isEditing: Bool
+    @Binding var editingName: String
+    let onEditComplete: () -> Void
+    let onEditStart: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Route name and edit button
+            HStack {
+                if isEditing {
+                    TextField("Route name", text: $editingName)
+                        .font(.headline)
+                        .padding(6)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(6)
+                        .onSubmit {
+                            onEditComplete()
+                        }
+                } else {
+                    Text(route.name ?? "Unnamed Route")
+                        .font(.headline)
+                }
+                
+                Spacer()
+                
+                Button {
+                    if isEditing {
+                        onEditComplete()
+                    } else {
+                        onEditStart()
+                    }
+                } label: {
+                    Image(systemName: isEditing ? "checkmark" : "pencil")
+                        .font(.system(size: 14))
+                        .padding(6)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
+            }
+            
+            // Route details
+            HStack(spacing: 16) {
+                HStack(spacing: 8) {
+                    Image(systemName: routeTypeIcon(for: route.type))
+                        .font(.system(size: 14))
+                        .foregroundColor(routeTypeColor(for: route.type))
+                    
+                    Text(routeTypeName(for: route.type))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Format date
+                Text(formattedDate(route.date))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(12)
+    }
+    
+    /// Returns the icon name for a route type.
+    private func routeTypeIcon(for type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .walking: return "figure.walk"
+        case .running: return "figure.run"
+        case .cycling: return "figure.outdoor.cycle"
+        default: return "mappin.and.ellipse"
+        }
+    }
+    
+    /// Returns the display name for a route type.
+    private func routeTypeName(for type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .walking: return "Walking"
+        case .running: return "Running"
+        case .cycling: return "Cycling"
+        default: return "Unknown"
+        }
+    }
+    
+    /// Returns the color for a route type.
+    private func routeTypeColor(for type: HKWorkoutActivityType) -> Color {
+        switch type {
+        case .walking: return .blue
+        case .running: return .red
+        case .cycling: return .green
+        default: return .gray
+        }
+    }
+    
+    /// Formats a date for display.
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
 }
 
 #Preview {
@@ -980,4 +1200,317 @@ struct SampleView: View {
         onDateFilterChanged: nil
     )
     .preferredColorScheme(.dark)
+}
+
+import SwiftUI
+import HealthKit
+import MapKit
+
+/// A beautifully designed row displaying a route's information with editable name.
+struct EnhancedRouteRow: View {
+    // MARK: - Properties
+    let route: RouteInfo
+    let isEditing: Bool
+    @Binding var editingName: String
+    let onEditComplete: () -> Void
+    let onEditStart: () -> Void
+    
+    @State private var showPreview: Bool = false
+    
+    // MARK: - Body
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Route header with name and edit button
+            routeHeaderView
+            
+            // Route details
+            routeDetailsView
+            
+            // Map preview (conditionally shown)
+            if showPreview {
+                routePreviewMap
+                    .frame(height: 150)
+                    .cornerRadius(12)
+                    .padding(.top, 8)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.systemBackground))
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(routeTypeColor(for: route.type).opacity(0.15), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Subviews
+    
+    /// Header view with route name and edit button
+    private var routeHeaderView: some View {
+        HStack(spacing: 12) {
+            // Route activity icon
+            ZStack {
+                Circle()
+                    .fill(routeTypeColor(for: route.type).opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: routeTypeIcon(for: route.type))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(routeTypeColor(for: route.type))
+            }
+            
+            // Route name / Edit field
+            if isEditing {
+                TextField("Route name", text: $editingName)
+                    .font(.headline)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                    .onSubmit {
+                        onEditComplete()
+                    }
+            } else {
+                Text(route.name ?? routeTypeName(for: route.type))
+                    .font(.headline)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            // Edit/Save button
+            Button {
+                if isEditing {
+                    onEditComplete()
+                } else {
+                    onEditStart()
+                }
+            } label: {
+                Image(systemName: isEditing ? "checkmark.circle.fill" : "pencil")
+                    .font(.system(size: 18))
+                    .foregroundColor(isEditing ? .green : .gray)
+                    .padding(6)
+                    .background(
+                        Circle()
+                            .fill(isEditing ? Color.green.opacity(0.15) : Color(.systemGray6))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    /// Details view with metadata about the route
+    private var routeDetailsView: some View {
+        VStack(spacing: 10) {
+            Divider()
+                .padding(.vertical, 10)
+            
+            HStack(spacing: 16) {
+                // Date info
+                dateInfoView
+                
+                Divider()
+                    .frame(height: 30)
+                
+                // Distance or other metrics could go here
+                // This is a placeholder for future implementation
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.swap")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                    
+                    Text("2.3 mi")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Toggle preview button
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
+                        showPreview.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(showPreview ? "Hide Map" : "Show Map")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Image(systemName: showPreview ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+    
+    /// Date information formatted nicely
+    private var dateInfoView: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "calendar")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+            
+            VStack(alignment: .leading, spacing: 1) {
+                Text(formattedDate(route.date))
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                
+                Text(formattedTime(route.date))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    /// Map preview of the route
+    private var routePreviewMap: some View {
+        Map {
+            MapPolyline(route.polyline)
+                .stroke(routeTypeColor(for: route.type), lineWidth: 3)
+                
+            if let firstLocation = route.locations.first {
+                Annotation("Start", coordinate: firstLocation.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 24, height: 24)
+                            .shadow(radius: 2)
+                        
+                        Circle()
+                            .fill(routeTypeColor(for: route.type))
+                            .frame(width: 16, height: 16)
+                    }
+                }
+            }
+            
+            if let lastLocation = route.locations.last, route.locations.count > 1 {
+                Annotation("End", coordinate: lastLocation.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 24, height: 24)
+                            .shadow(radius: 2)
+                        
+                        Image(systemName: "flag.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(routeTypeColor(for: route.type))
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Returns the icon name for a route type.
+    private func routeTypeIcon(for type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .walking: return "figure.walk"
+        case .running: return "figure.run"
+        case .cycling: return "figure.outdoor.cycle"
+        default: return "mappin.and.ellipse"
+        }
+    }
+    
+    /// Returns the display name for a route type.
+    private func routeTypeName(for type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .walking: return "Walking Route"
+        case .running: return "Running Route"
+        case .cycling: return "Cycling Route"
+        default: return "Unknown Route"
+        }
+    }
+    
+    /// Returns the color for a route type.
+    private func routeTypeColor(for type: HKWorkoutActivityType) -> Color {
+        switch type {
+        case .walking: return .blue
+        case .running: return .red
+        case .cycling: return .green
+        default: return .gray
+        }
+    }
+    
+    /// Formats a date for display.
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+    
+    /// Formats a time for display.
+    private func formattedTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    let locations = [
+        CLLocation(latitude: 37.7749, longitude: -122.4194),
+        CLLocation(latitude: 37.7750, longitude: -122.4195),
+        CLLocation(latitude: 37.7751, longitude: -122.4196)
+    ]
+    
+    let routeInfo = RouteInfo(
+        name: "Morning Run",
+        type: .running,
+        date: Date(),
+        locations: locations
+    )
+    
+    return VStack {
+        EnhancedRouteRow(
+            route: routeInfo,
+            isEditing: false,
+            editingName: .constant(""),
+            onEditComplete: {},
+            onEditStart: {}
+        )
+        
+        EnhancedRouteRow(
+            route: RouteInfo(
+                name: "Evening Walk",
+                type: .walking,
+                date: Date().addingTimeInterval(-3600 * 5),
+                locations: locations
+            ),
+            isEditing: false,
+            editingName: .constant(""),
+            onEditComplete: {},
+            onEditStart: {}
+        )
+        
+        EnhancedRouteRow(
+            route: RouteInfo(
+                name: "Weekend Bike Ride",
+                type: .cycling,
+                date: Date().addingTimeInterval(-3600 * 24),
+                locations: locations
+            ),
+            isEditing: false,
+            editingName: .constant(""),
+            onEditComplete: {},
+            onEditStart: {}
+        )
+    }
+    .padding()
+    .background(Color(.systemGroupedBackground))
 }

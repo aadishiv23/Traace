@@ -23,6 +23,11 @@ class HealthKitManager: ObservableObject {
     @Published var walkingRoutes: [[CLLocation]] = []
     @Published var runningRoutes: [[CLLocation]] = []
     @Published var cyclingRoutes: [[CLLocation]] = []
+    
+    /// RouteInfo objects with names and metadata
+    @Published var walkingRouteInfos: [RouteInfo] = []
+    @Published var runningRouteInfos: [RouteInfo] = []
+    @Published var cyclingRouteInfos: [RouteInfo] = []
 
     /// Cached polylines.
     @Published var walkingPolylines: [MKPolyline] = []
@@ -150,6 +155,10 @@ class HealthKitManager: ObservableObject {
         var walking = [[CLLocation]]()
         var running = [[CLLocation]]()
         var cycling = [[CLLocation]]()
+        
+        var walkingInfos = [RouteInfo]()
+        var runningInfos = [RouteInfo]()
+        var cyclingInfos = [RouteInfo]()
 
         for cdWorkout in workouts {
             guard let typeString = cdWorkout.type else {
@@ -177,14 +186,22 @@ class HealthKitManager: ObservableObject {
 
             let sortedPoints = points.sorted { ($0.timestamp ?? Date.distantPast) < ($1.timestamp ?? Date.distantPast) }
             let locations = sortedPoints.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+            
+            // Create a RouteInfo object with date from the workout
+            let routeDate = cdWorkout.startDate ?? Date()
+            let routeName = cdWorkout.name
+            let routeInfo = RouteInfo(name: routeName, type: typeEnum, date: routeDate, locations: locations)
 
             switch typeEnum {
             case .walking:
                 walking.append(locations)
+                walkingInfos.append(routeInfo)
             case .running:
                 running.append(locations)
+                runningInfos.append(routeInfo)
             case .cycling:
                 cycling.append(locations)
+                cyclingInfos.append(routeInfo)
             default:
                 break
             }
@@ -194,6 +211,10 @@ class HealthKitManager: ObservableObject {
             self.walkingRoutes = walking
             self.runningRoutes = running
             self.cyclingRoutes = cycling
+            
+            self.walkingRouteInfos = walkingInfos
+            self.runningRouteInfos = runningInfos
+            self.cyclingRouteInfos = cyclingInfos
 
             await self.computePolylines()
         }
@@ -407,5 +428,90 @@ extension HealthKitManager {
         }
         
         return filteredPolylines
+    }
+    
+    // New methods for working with named routes
+    
+    /// Updates the name of a route
+    func updateRouteName(id: UUID, newName: String) {
+        var updated = false
+        
+        // Update walking routes
+        if let index = walkingRouteInfos.firstIndex(where: { $0.id == id }) {
+            walkingRouteInfos[index].name = newName
+            updated = true
+            
+            // Find the equivalent workout in Core Data by comparing dates
+            // This is a simplification - ideally we'd have a direct reference
+            let date = walkingRouteInfos[index].date
+            saveRouteNameToCore(type: .walking, date: date, name: newName)
+        }
+        
+        // Update running routes
+        if let index = runningRouteInfos.firstIndex(where: { $0.id == id }) {
+            runningRouteInfos[index].name = newName
+            updated = true
+            
+            let date = runningRouteInfos[index].date
+            saveRouteNameToCore(type: .running, date: date, name: newName)
+        }
+        
+        // Update cycling routes
+        if let index = cyclingRouteInfos.firstIndex(where: { $0.id == id }) {
+            cyclingRouteInfos[index].name = newName
+            updated = true
+            
+            let date = cyclingRouteInfos[index].date
+            saveRouteNameToCore(type: .cycling, date: date, name: newName)
+        }
+        
+        if updated {
+            // Notify observers that the data has changed
+            objectWillChange.send()
+        }
+    }
+    
+    /// Saves a route name to Core Data
+    private func saveRouteNameToCore(type: HKWorkoutActivityType, date: Date, name: String) {
+        Task {
+            let workouts = await coreDataManager.fetchAllWorkouts()
+            
+            // Find matching workout by type and date
+            let typeString = String(type.rawValue)
+            
+            let calendar = Calendar.current
+            for workout in workouts {
+                if workout.type == typeString,
+                   let workoutDate = workout.startDate,
+                   let workoutId = workout.id,
+                   calendar.isDate(workoutDate, inSameDayAs: date) {
+                    // Found a match, update the name
+                    coreDataManager.updateWorkoutName(id: workoutId, newName: name)
+                    break
+                }
+            }
+        }
+    }
+    
+    /// Gets all routes filtered by date range
+    func getAllRouteInfosByDateRange(start: Date, end: Date) -> [RouteInfo] {
+        let walkingFiltered = walkingRouteInfos.filter { $0.date >= start && $0.date < end }
+        let runningFiltered = runningRouteInfos.filter { $0.date >= start && $0.date < end }
+        let cyclingFiltered = cyclingRouteInfos.filter { $0.date >= start && $0.date < end }
+        
+        return walkingFiltered + runningFiltered + cyclingFiltered
+    }
+    
+    /// Gets all routes for a specific date
+    func getAllRouteInfosByDate(date: Date?) -> [RouteInfo] {
+        guard let date = date else {
+            return walkingRouteInfos + runningRouteInfos + cyclingRouteInfos
+        }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        return getAllRouteInfosByDateRange(start: startOfDay, end: endOfDay)
     }
 }

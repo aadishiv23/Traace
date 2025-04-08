@@ -16,6 +16,9 @@ struct RouteInfo: Identifiable {
     /// An identifier for this `RouteInfo` instance.
     var id = UUID()
     
+    /// The name of this route. Optional, as some routes may not have names initially.
+    var name: String?
+    
     /// The type of this workout: Running, Walking, or Cycling.
     var type: HKWorkoutActivityType
     

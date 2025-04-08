@@ -9,164 +9,149 @@ import SwiftUI
 
 /// A reusable search bar. The `isInteractive` flag lets us disable typing
 /// in the “compact” version but enable it in the “expanded” overlay.
+import SwiftUI
+
+/// An enhanced search bar with date selection functionality.
 struct SearchBarView: View {
-
-    /// The string passed in as the search variable.
+    // MARK: - Properties
+    
+    /// The search text binding.
     @Binding var searchText: String
-
-    /// The date passed in as the optional search var.
+    
+    /// The selected date to filter by.
     @Binding var selectedDate: Date?
-
-    /// Whether the user can actually type here (in the search overlay).
-    var isInteractive: Bool
-
-    @State private var showDatePicker = false
-    @State private var tempDate = Date()
-
-    /// Focus state for the text field
-    @FocusState private var textFieldFocused: Bool
-
+    
+    /// Whether this search bar is interactive.
+    let isInteractive: Bool
+    
+    /// Whether the date picker is showing.
+    @State private var isShowingDatePicker = false
+    
+    // MARK: - Body
+    
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                // Search field
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-
-                    TextField("Search routes", text: $searchText)
-                        .font(.system(size: 16))
-                        .disabled(!isInteractive)
-                        .focused($textFieldFocused)
-
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
-                                .padding(4)
-                        }
-                    }
-                }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(.systemGray6))
-                )
-
-                // Date filter button
-                Button(action: {
-                    tempDate = selectedDate ?? Date()
-                    showDatePicker.toggle()
-                }) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 18))
-                        .foregroundColor(.blue)
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(selectedDate != nil ? Color.blue.opacity(0.1) : Color(.systemGray6))
-                        )
-                }
-                .disabled(!isInteractive)
-            }
-
-            // Date filter chips (only shown when date is selected)
-            if let date = selectedDate {
-                HStack {
-                    Spacer()
-
-                    Text("Filtered by: ")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-
-                    HStack(spacing: 4) {
-                        Text(dateFormatter.string(from: date))
-                            .font(.system(size: 14, weight: .medium))
-
-                        Button(action: {
-                            selectedDate = nil
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.blue)
-                    )
-                    .foregroundColor(.white)
-                }
-                .transition(.move(edge: .trailing).combined(with: .opacity))
-            }
-        }
-        .animation(.easeInOut(duration: 0.35), value: selectedDate)
-        .onAppear {
+        HStack(spacing: 8) {
+            // Search icon and text field
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+                .padding(.leading, 8)
+            
             if isInteractive {
-                // A slight delay allows the overlay transition to complete.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    textFieldFocused = true
-                }
+                TextField("Search routes", text: $searchText)
+                    .autocorrectionDisabled()
+                    .padding(.vertical, 10)
+            } else {
+                Text(searchText.isEmpty ? "Search routes" : searchText)
+                    .foregroundColor(searchText.isEmpty ? .gray : .primary)
+                    .padding(.vertical, 10)
             }
+            
+            Spacer()
+            
+            // Date filtering
+            dateFilterView
         }
-        .sheet(isPresented: $showDatePicker) {
-            VStack(spacing: 20) {
-                HStack {
-                    Button("Cancel") {
-                        showDatePicker = false
-                    }
-
-                    Spacer()
-
-                    Text("Filter by Date")
-                        .font(.headline)
-
-                    Spacer()
-
-                    Button("Apply") {
-                        selectedDate = tempDate
-                        showDatePicker = false
-                    }
-                    .fontWeight(.bold)
-                    .foregroundColor(.blue)
-                }
-                .padding(.horizontal)
-
-                DatePicker("", selection: $tempDate, displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .labelsHidden()
-                    .padding(.horizontal)
-
-                Button(action: {
-                    selectedDate = nil
-                    showDatePicker = false
-                }) {
-                    Text("Clear Filter")
-                        .fontWeight(.medium)
-                        .foregroundColor(.red)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.red.opacity(0.1))
-                        )
-                }
-                .padding(.horizontal)
-                .padding(.bottom)
-            }
-            .presentationDetents([.medium, .height(500)])
-            .presentationCornerRadius(20)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .sheet(isPresented: $isShowingDatePicker) {
+            datePicker
         }
     }
-
-    private var dateFormatter: DateFormatter {
+    
+    // MARK: - Subviews
+    
+    /// The date filter view with either a calendar icon or the selected date.
+    private var dateFilterView: some View {
+        Button {
+            if isInteractive {
+                isShowingDatePicker = true
+            }
+        } label: {
+            HStack(spacing: 4) {
+                if let date = selectedDate {
+                    // Show the selected date
+                    Text(formattedShortDate(date))
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    // Clear button
+                    if isInteractive {
+                        Button {
+                            selectedDate = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.trailing, 4)
+                    }
+                } else {
+                    // Show calendar icon
+                    Image(systemName: "calendar")
+                        .foregroundColor(.gray)
+                        .padding(.trailing, 8)
+                }
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selectedDate != nil ? Color.blue.opacity(0.1) : Color.clear)
+            )
+        }
+        .disabled(!isInteractive)
+    }
+    
+    /// The date picker sheet.
+    private var datePicker: some View {
+        NavigationView {
+            VStack {
+                DatePicker(
+                    "Select Date",
+                    selection: Binding(
+                        get: { selectedDate ?? Date() },
+                        set: { selectedDate = $0 }
+                    ),
+                    displayedComponents: [.date]
+                )
+                .datePickerStyle(.graphical)
+                .padding()
+                
+                Button("Clear Date") {
+                    selectedDate = nil
+                    isShowingDatePicker = false
+                }
+                .foregroundColor(.red)
+                .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Filter by Date")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        isShowingDatePicker = false
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Formats a date for the filter display.
+    private func formattedShortDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 

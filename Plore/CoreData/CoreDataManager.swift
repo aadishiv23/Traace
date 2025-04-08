@@ -120,6 +120,28 @@ final class CoreDataManager {
                     newWorkout.type = String(hkWorkout.workoutActivityType.rawValue)
                     // Check metadata for indoor status
                     newWorkout.isIndoor = (hkWorkout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool) ?? false
+                    
+                    // Generate a default name based on workout type and date
+                    let formatter = DateFormatter()
+                    formatter.dateStyle = .medium
+                    formatter.timeStyle = .short
+                    
+                    let dateString = formatter.string(from: hkWorkout.startDate)
+                    let activityName: String
+                    
+                    switch hkWorkout.workoutActivityType {
+                    case .walking:
+                        activityName = "Walk"
+                    case .running:
+                        activityName = "Run"
+                    case .cycling:
+                        activityName = "Ride"
+                    default:
+                        activityName = "Workout"
+                    }
+                    
+                    newWorkout.name = "\(activityName) on \(dateString)"
+                    
                     resultWorkout = newWorkout
                 }
             } catch {
@@ -221,6 +243,34 @@ final class CoreDataManager {
         await MainActor.run {
             // mainContext.reset() // uncomment if needed
             logger.info("Core Data clearing complete.")
+        }
+    }
+
+    /// Updates the name of a workout
+    func updateWorkoutName(id: String, newName: String, context: NSManagedObjectContext? = nil) {
+        let workContext = context ?? mainContext
+        
+        workContext.performAndWait {
+            let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+            fetchRequest.fetchLimit = 1
+            
+            do {
+                let results = try workContext.fetch(fetchRequest)
+                if let workout = results.first {
+                    workout.name = newName
+                    
+                    if context == nil {
+                        // Only save if using mainContext
+                        try workContext.save()
+                    }
+                    logger.debug("Updated workout name: \(id) to \(newName)")
+                } else {
+                    logger.error("Workout not found for ID: \(id)")
+                }
+            } catch {
+                logger.error("Error updating workout name: \(error.localizedDescription)")
+            }
         }
     }
 }
