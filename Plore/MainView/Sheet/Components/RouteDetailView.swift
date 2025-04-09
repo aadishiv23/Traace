@@ -44,17 +44,19 @@ struct RouteDetailView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Map view
-            mapView
+        ZStack(alignment: .top) {
+            // Main content
+            VStack(spacing: 0) {
+                // Map view
+                mapView
 
-            // Detail panel
-            detailPanel
-        }
-        .edgesIgnoringSafeArea(.top)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+                // Detail panel
+                detailPanel
+            }
+
+            // Custom navigation bar overlay
+            HStack {
+                // Back button
                 Button {
                     dismiss()
                 } label: {
@@ -65,9 +67,10 @@ struct RouteDetailView: View {
                         .background(Color.black.opacity(0.5))
                         .clipShape(Circle())
                 }
-            }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+                Spacer()
+
+                // Map style toggle button
                 Button {
                     // Toggle between standard and satellite using the boolean
                     isStandardMap.toggle()
@@ -81,7 +84,11 @@ struct RouteDetailView: View {
                         .clipShape(Circle())
                 }
             }
+            .padding(.horizontal)
+            .padding(.top, 50) // Adjust this based on safe area
         }
+        .edgesIgnoringSafeArea(.all)
+        .navigationBarHidden(true) // This hides the navigation bar completely
     }
 
     // MARK: - Subviews
@@ -172,23 +179,23 @@ struct RouteDetailView: View {
                         color: routeTypeColor(for: route.type)
                     )
 
-                    // Duration
-                    StatCard(
-                        value: "25",
-                        unit: "min",
-                        label: "Duration",
-                        icon: "clock",
-                        color: routeTypeColor(for: route.type)
-                    )
-
-                    // Pace
-                    StatCard(
-                        value: "10:30",
-                        unit: "mi/min",
-                        label: "Pace",
-                        icon: "speedometer",
-                        color: routeTypeColor(for: route.type)
-                    )
+//                    // Duration
+//                    StatCard(
+//                        value: "25",
+//                        unit: "min",
+//                        label: "Duration",
+//                        icon: "clock",
+//                        color: routeTypeColor(for: route.type)
+//                    )
+//
+//                    // Pace
+//                    StatCard(
+//                        value: "10:30",
+//                        unit: "mi/min",
+//                        label: "Pace",
+//                        icon: "speedometer",
+//                        color: routeTypeColor(for: route.type)
+//                    )
                 }
 
                 // Elevation profile placeholder
@@ -220,6 +227,10 @@ struct RouteDetailView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    
+                    Text("Actual elevation data coming soon...")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 .padding(.top, 8)
 
@@ -335,7 +346,7 @@ struct RouteDetailView_Previews: PreviewProvider {
             CLLocation(latitude: 37.7749 + $0, longitude: -122.4194 + $0)
         }
 
-        let coordinates = locations.map { $0.coordinate }
+        let coordinates = locations.map(\.coordinate)
         let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
 
         return RouteInfo(
