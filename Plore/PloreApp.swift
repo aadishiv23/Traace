@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct PloreApp: App {
+    
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if hasSeenOnboarding {
+                ContentView()
+            } else {
+                OnboardingView(hasCompletedOnboarding: $hasSeenOnboarding)
+            }
         }
     }
 }
