@@ -322,3 +322,27 @@ struct RouteDetailView: View {
         return String(format: "%.1f", distanceInMiles)
     }
 }
+
+struct RouteDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            RouteDetailView(route: mockRouteInfo)
+        }
+    }
+
+    static var mockRouteInfo: RouteInfo {
+        let locations = stride(from: 0.0, to: 0.01, by: 0.001).map {
+            CLLocation(latitude: 37.7749 + $0, longitude: -122.4194 + $0)
+        }
+
+        let coordinates = locations.map { $0.coordinate }
+        let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+
+        return RouteInfo(
+            id: UUID(),
+            name: "Golden Gate Jog",
+            type: .running, date: Date(),
+            locations: locations
+        )
+    }
+}

@@ -307,7 +307,7 @@ struct SheetView: View {
             VStack(spacing: 16) {
                 // Sync status section
                 syncStatusSection
- 
+
                 // Only show route toggles in non-search mode for quick filtering
 //                if !isSearchActive {
 //                    routeToggleSection
@@ -317,7 +317,7 @@ struct SheetView: View {
                 routeListSection
             }
             .padding(.horizontal)
-            .padding(.top, 16)
+            .padding(.top, 8)
         }
         .overlay(
             isShowingSettingsPanel ? settingsOverlay : nil
@@ -369,7 +369,7 @@ struct SheetView: View {
     /// Focused route indicator when a specific route is selected.
     private var focusedRouteIndicator: some View {
         HStack {
-            Text("Showing only: \(focusedRoute?.name ?? "Selected Route")")
+            Text("Showing \(focusedRoute?.name ?? "Selected Route") on map")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
@@ -407,7 +407,6 @@ struct SheetView: View {
                 color: .red,
                 icon: "figure.run",
                 isOn: $showRunningRoutes
-
             )
             routeCountCard(
                 count: healthKitManager.cyclingRoutes.count,
@@ -588,12 +587,12 @@ struct SheetView: View {
                     // Glassmorphic base effect
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Material.ultraThinMaterial)
-                    
+
                     // Dynamic glow effect
                     RoundedRectangle(cornerRadius: 20)
                         .fill(isOn.wrappedValue ? color.opacity(0.12) : color.opacity(0.02))
                         .blur(radius: 2)
-                    
+
                     // Highlight at the top (for 3D effect)
                     RoundedRectangle(cornerRadius: 20)
                         .fill(
@@ -607,7 +606,7 @@ struct SheetView: View {
                             )
                         )
                         .padding(1)
-                    
+
                     // Border with glow
                     RoundedRectangle(cornerRadius: 20)
                         .strokeBorder(
@@ -623,10 +622,12 @@ struct SheetView: View {
                         )
                 }
             )
-            .shadow(color: isOn.wrappedValue ? color.opacity(0.15) : Color.black.opacity(0.08),
-                    radius: isOn.wrappedValue ? 5 : 2.5,
-                    x: 0,
-                    y: isOn.wrappedValue ? 4 : 2)
+            .shadow(
+                color: isOn.wrappedValue ? color.opacity(0.15) : Color.black.opacity(0.08),
+                radius: isOn.wrappedValue ? 5 : 2.5,
+                x: 0,
+                y: isOn.wrappedValue ? 4 : 2
+            )
             .scaleEffect(isOn.wrappedValue ? 1.02 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn.wrappedValue)
             .accessibilityElement(children: .combine)
@@ -868,7 +869,7 @@ struct RoundedCorner: Shape {
     }
 }
 
-// Add this custom button style for better press animation
+/// Add this custom button style for better press animation
 struct ScaleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
