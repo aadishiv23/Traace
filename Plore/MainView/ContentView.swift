@@ -243,6 +243,7 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
+                    showExampleSheet = false
                     showRouteDetailView = true
                 } label: {
                     Text("View Details")
@@ -351,14 +352,18 @@ struct ContentView: View {
                     navigateToNote = true
                 }
             },
+            showRouteDetailView: {
+                showExampleSheet = false
+                wasExampleSheetDismissed = true
+            },
             onRouteSelected: { route in
                 // Focus on the selected route
                 focusedRoute = route
-
+                
                 // Dismiss the sheet to show the map fully
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-//                    showExampleSheet = false
-//                }
+                //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                //                    showExampleSheet = false
+                //                }
             },
             onDateFilterChanged: {
                 updateFilteredRoutes()

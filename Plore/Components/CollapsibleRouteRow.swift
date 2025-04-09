@@ -142,17 +142,21 @@ struct CollapsibleRouteRow: View {
             // Toggle expand button
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                    showPreview.toggle()
+                    isExpanded.toggle()
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text(showPreview ? "Hide Map" : "Show Map")
+                    Text(isExpanded ? "Hide Map" : "Show Map")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .transition(.opacity)
+                        .id(isExpanded ? "hide" : "show")
 
-                    Image(systemName: showPreview ? "chevron.up" : "chevron.down")
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.secondary)
+                        .transition(.opacity)
+                        .id(isExpanded ? "up" : "down")
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)

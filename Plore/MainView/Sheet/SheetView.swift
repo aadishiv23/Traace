@@ -71,6 +71,7 @@ struct SheetView: View {
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
     let onPetalTap: () -> Void
+    let showRouteDetailView: () -> Void
 
     let onRouteSelected: (RouteInfo) -> Void
     let onDateFilterChanged: (() -> Void)?

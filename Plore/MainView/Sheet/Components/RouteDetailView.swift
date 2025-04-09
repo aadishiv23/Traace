@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import HealthKit
 import MapKit
 import SwiftUI
 
@@ -19,7 +20,6 @@ struct RouteDetailView: View {
     @State private var mapPosition: MapCameraPosition
     @State private var mapStyle: MapStyle = .standard
     @State private var isStandardMap: Bool = true
-
 
     // MARK: - Initialization
 
