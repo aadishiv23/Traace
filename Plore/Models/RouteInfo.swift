@@ -11,7 +11,7 @@ import HealthKit
 import MapKit
 
 /// A lightweight model to hold a route's type, date, and location (plus computed polyline).
-struct RouteInfo: Identifiable {
+struct RouteInfo: Identifiable, Equatable {
     
     /// An identifier for this `RouteInfo` instance.
     var id = UUID()
