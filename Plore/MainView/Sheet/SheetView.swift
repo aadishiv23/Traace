@@ -713,31 +713,35 @@ struct SheetView: View {
     private func performSync() {
         // Start the sync process
         isSyncing = true
+        print("🔄 [SheetView] Starting manual sync...") // Add log
+
+        healthKitManager.syncData()
 
         // Using Task to properly handle async operations
         Task {
             do {
-                // Simulate network request
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+                // *** THE KEY CHANGE: Call syncData instead of loadRoutes ***
 
-                // Use the main thread for UI updates
-                Task { @MainActor in
-                    // Load routes more efficiently
-                    await healthKitManager.loadRoutes()
+                // The Task.sleep was likely just for simulation, can be removed
+                // try await Task.sleep(nanoseconds: 1_000_000_000)
 
+                // Use await MainActor.run for clarity and safety
+                await MainActor.run {
                     // Update state
-                    lastSyncTime = Date()
+                    lastSyncTime = Date() // Update last sync time display
                     isSyncing = false
+                    print("✅ [SheetView] Manual sync complete. Refreshing filtered routes.") // Add log
 
-                    // Update filtered routes after sync
+                    // Update filtered routes AFTER syncData has finished and potentially
+                    // updated the HealthKitManager's published properties
                     updateFilteredRoutes()
                 }
             } catch {
-                // Handle any errors
-                print("Sync error: \(error)")
-
+                // Handle any errors from syncData
+                print("❌ [SheetView] Sync error: \(error)")
                 await MainActor.run {
                     isSyncing = false
+                    // Optionally show an error alert to the user
                 }
             }
         }

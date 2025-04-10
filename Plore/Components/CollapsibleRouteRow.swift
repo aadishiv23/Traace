@@ -41,9 +41,21 @@ struct CollapsibleRouteRow: View {
                 Divider()
                     .padding(.vertical, 10)
 
-                // Map preview
+                // Map preview with 3D transition
                 mapPreviewWithNavigation
                     .padding(.top, 8)
+                    .transition(
+                        .asymmetric(
+                            insertion:
+                                .scale(scale: 0.95)
+                                .combined(with: .opacity)
+                                .combined(with: .offset(y: 5)),
+                            removal:
+                                .scale(scale: 0.95)
+                                .combined(with: .opacity)
+                                .combined(with: .offset(y: 5))
+                        )
+                    )
             }
         }
         .padding(16)
@@ -70,14 +82,33 @@ struct CollapsibleRouteRow: View {
     private var routeHeaderView: some View {
         HStack(spacing: 12) {
             // Route activity icon
+            // Replace your ZStack for the route icon:
             ZStack {
+                // Outer glow/shadow
                 Circle()
-                    .fill(routeTypeColor(for: route.type).opacity(0.15))
+                    .fill(routeTypeColor(for: route.type).opacity(0.2))
+                    .frame(width: 46, height: 46)
+                    .blur(radius: 4)
+
+                // Main circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                routeTypeColor(for: route.type).opacity(0.8),
+                                routeTypeColor(for: route.type).opacity(0.4)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 1, y: 1)
+                    .shadow(color: .white.opacity(0.3), radius: 2, x: -1, y: -1)
 
                 Image(systemName: routeTypeIcon(for: route.type))
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(routeTypeColor(for: route.type))
+                    .foregroundColor(.white)
             }
 
             // Route name / Edit field
@@ -145,6 +176,7 @@ struct CollapsibleRouteRow: View {
             Spacer()
 
             // Toggle expand button
+            // Add this to the toggle expansion button
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                     isExpanded.toggle()
@@ -167,10 +199,13 @@ struct CollapsibleRouteRow: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
+                        .fill(Color.secondary.opacity(0.1))
+                        .shadow(color: .black.opacity(0.05), radius: 2, x: 1, y: 1)
+                        .shadow(color: .white.opacity(0.5), radius: 2, x: -1, y: -1)
                 )
             }
             .buttonStyle(PlainButtonStyle())
+            .pressedEffect(isPressed: isExpanded) // Our custom pressed effect
         }
     }
 
