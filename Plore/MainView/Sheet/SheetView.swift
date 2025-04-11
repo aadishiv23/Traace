@@ -404,21 +404,21 @@ struct SheetView: View {
             routeCountCard(
                 count: healthKitManager.runningRoutes.count,
                 title: "Running",
-                color: .red,
+                color: ActivityColors.color(for: .running, style: .standard),
                 icon: "figure.run",
                 isOn: $showRunningRoutes
             )
             routeCountCard(
                 count: healthKitManager.cyclingRoutes.count,
                 title: "Cycling",
-                color: .green,
+                color: ActivityColors.color(for: .cycling, style: .standard),
                 icon: "figure.outdoor.cycle",
                 isOn: $showCyclingRoutes
             )
             routeCountCard(
                 count: healthKitManager.walkingRoutes.count,
                 title: "Walking",
-                color: .blue,
+                color: ActivityColors.color(for: .walking, style: .standard),
                 icon: "figure.walk",
                 isOn: $showWalkingRoutes
             )
@@ -557,11 +557,11 @@ struct SheetView: View {
             }
         } label: {
             VStack(spacing: 10) {
-                // Icon with 3D effect
+                // Icon with more subtle effect
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: isOn.wrappedValue ? .bold : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
-                    .shadow(color: isOn.wrappedValue ? color.opacity(0.5) : .clear, radius: 4, x: 0, y: 0)
+                    .shadow(color: isOn.wrappedValue ? color.opacity(0.3) : .clear, radius: 2, x: 0, y: 0) // Reduced shadow
                     .scaleEffect(isOn.wrappedValue ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn.wrappedValue)
 
@@ -570,7 +570,7 @@ struct SheetView: View {
                     .font(.system(size: 22, weight: isOn.wrappedValue ? .bold : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
                     .contentTransition(.numericText(countsDown: false))
-                    .shadow(color: isOn.wrappedValue ? color.opacity(0.3) : .clear, radius: 2, x: 0, y: 0)
+                    .shadow(color: isOn.wrappedValue ? color.opacity(0.2) : .clear, radius: 1, x: 0, y: 0) // Reduced shadow
                     .scaleEffect(isOn.wrappedValue ? 1.1 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isOn.wrappedValue)
 
@@ -588,17 +588,17 @@ struct SheetView: View {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Material.ultraThinMaterial)
 
-                    // Dynamic glow effect
+                    // More subtle glow effect
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isOn.wrappedValue ? color.opacity(0.12) : color.opacity(0.02))
-                        .blur(radius: 2)
+                        .fill(isOn.wrappedValue ? color.opacity(0.08) : color.opacity(0.01)) // Reduced opacity
+                        .blur(radius: 1) // Reduced blur
 
-                    // Highlight at the top (for 3D effect)
+                    // Subtle highlight at the top (for 3D effect)
                     RoundedRectangle(cornerRadius: 20)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    .white.opacity(isOn.wrappedValue ? 0.4 : 0.2),
+                                    .white.opacity(isOn.wrappedValue ? 0.25 : 0.15), // Reduced opacity
                                     .white.opacity(0)
                                 ]),
                                 startPoint: .topLeading,
@@ -607,26 +607,26 @@ struct SheetView: View {
                         )
                         .padding(1)
 
-                    // Border with glow
+                    // Lighter border with reduced glow
                     RoundedRectangle(cornerRadius: 20)
                         .strokeBorder(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    color.opacity(isOn.wrappedValue ? 0.5 : 0.1),
-                                    color.opacity(isOn.wrappedValue ? 0.2 : 0.05)
+                                    color.opacity(isOn.wrappedValue ? 0.3 : 0.08), // Reduced opacity
+                                    color.opacity(isOn.wrappedValue ? 0.1 : 0.03) // Reduced opacity
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 1.5
+                            lineWidth: 1 // Thinner border
                         )
                 }
             )
             .shadow(
-                color: isOn.wrappedValue ? color.opacity(0.15) : Color.black.opacity(0.08),
-                radius: isOn.wrappedValue ? 5 : 2.5,
+                color: isOn.wrappedValue ? color.opacity(0.1) : Color.black.opacity(0.06), // Reduced shadow
+                radius: isOn.wrappedValue ? 3 : 2, // Reduced radius
                 x: 0,
-                y: isOn.wrappedValue ? 4 : 2
+                y: isOn.wrappedValue ? 2 : 1 // Reduced offset
             )
             .scaleEffect(isOn.wrappedValue ? 1.02 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn.wrappedValue)

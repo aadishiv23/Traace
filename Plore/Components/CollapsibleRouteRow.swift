@@ -60,12 +60,12 @@ struct CollapsibleRouteRow: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 22)
                 .fill(Color(UIColor.systemBackground))
                 .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 22)
                 .strokeBorder(routeTypeColor(for: route.type).opacity(0.15), lineWidth: 1)
         )
         .contentShape(Rectangle()) // Make the whole card tappable
