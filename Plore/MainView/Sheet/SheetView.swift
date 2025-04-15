@@ -49,8 +49,11 @@ struct SheetView: View {
     /// Whether the search is active/interactive.
     @State private var isSearchActive = false
 
-    /// Whether the Settings panel is showing.
-    @State private var isShowingSettingsPanel = false
+    /// Show first-time user tips
+    @State private var showFirstTimeTips = false
+
+    // Whether the Settings panel is showing.
+    // @State private var isShowingSettingsPanel = false
 
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager: HealthKitManager
@@ -68,6 +71,9 @@ struct SheetView: View {
 
     @Binding var focusedRoute: RouteInfo?
 
+    /// Binding to hasCompletedOnboarding from ContentView
+    @Binding var hasCompletedOnboarding: Bool
+
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
     let onPetalTap: () -> Void
@@ -80,6 +86,8 @@ struct SheetView: View {
     @State private var isEditingRouteName: UUID? = nil
     @State private var editingName: String = ""
 
+    @AppStorage("hasSeenTips") private var hasSeenTips: Bool = false
+
     // MARK: - Body
 
     var body: some View {
@@ -88,13 +96,6 @@ struct SheetView: View {
             searchBarHeader
                 .padding(.top, 15)
                 .padding(.bottom, 5)
-
-            // Filter chips when search is active
-            if isSearchActive {
-                filterChipsRow
-                    .padding(.horizontal)
-                    .padding(.bottom, 10)
-            }
 
             // Main tab content
             tabContentSection
@@ -105,10 +106,14 @@ struct SheetView: View {
             }
         }
         .onAppear {
-            // Fix for routes not appearing on initial load
-            Task {
-                try? await Task.sleep(nanoseconds: 500_000_000) // Half second delay
-                updateFilteredRoutes()
+            performSync()
+            updateFilteredRoutes()
+
+            if hasCompletedOnboarding, !hasSeenTips {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showFirstTimeTips = true
+                    hasSeenTips = true
+                }
             }
         }
     }
@@ -119,7 +124,7 @@ struct SheetView: View {
     private var searchBarHeader: some View {
         HStack {
             // Search bar that stays in place
-            ImprovedSearchBarView(
+            MinimalSearchBarView(
                 searchText: $searchText,
                 selectedDate: $selectedDate,
                 isInteractive: $isSearchActive,
@@ -132,160 +137,8 @@ struct SheetView: View {
                     isSearchActive = true
                 }
             }
-
-            // Settings button
-            Button {
-                isShowingSettingsPanel.toggle()
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.gray)
-                    .padding(8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-            }
         }
         .padding(.horizontal)
-    }
-
-    // MARK: - Filter Chips Row
-
-    /// Row of filter chips for route types
-    private var filterChipsRow: some View {
-        HStack(spacing: 10) {
-            // Done button
-            Button {
-                isSearchActive = false
-                // Apply current filters
-                updateFilteredRoutes()
-            } label: {
-                Text("Done")
-                    .fontWeight(.medium)
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.blue.opacity(0.1))
-                    )
-            }
-
-            Spacer()
-
-            // Running filter
-            filterChip(
-                isSelected: $showRunningRoutes,
-                color: .red,
-                icon: "figure.run"
-            )
-
-            // Cycling filter
-            filterChip(
-                isSelected: $showCyclingRoutes,
-                color: .green,
-                icon: "figure.outdoor.cycle"
-            )
-
-            // Walking filter
-            filterChip(
-                isSelected: $showWalkingRoutes,
-                color: .blue,
-                icon: "figure.walk"
-            )
-        }
-    }
-
-    /// A filter chip button for route types.
-    private func filterChip(isSelected: Binding<Bool>, color: Color, icon: String) -> some View {
-        Button {
-            isSelected.wrappedValue.toggle()
-            updateFilteredRoutes()
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(isSelected.wrappedValue ? color.opacity(0.2) : Color.gray.opacity(0.1))
-            )
-            .foregroundColor(isSelected.wrappedValue ? color : .gray)
-            .overlay(
-                Capsule()
-                    .strokeBorder(isSelected.wrappedValue ? color : Color.clear, lineWidth: 1)
-            )
-        }
-    }
-
-    // MARK: - Settings Panel
-
-    private var settingsOverlay: some View {
-        VStack {
-            HStack {
-                Spacer()
-                Button {
-                    isShowingSettingsPanel = false
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray)
-                        .padding()
-                }
-            }
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Settings")
-                        .font(.title.bold())
-                        .padding(.bottom, 10)
-
-                    // Route visibility toggles
-                    routeVisibilitySettings
-
-                    // Other settings
-                    Toggle("Dark Mode", isOn: .constant(false))
-                    Toggle("Show Distance", isOn: .constant(true))
-
-                    Divider().padding(.vertical)
-
-                    Text("Version 1.0.0 • Build 2025.03.23")
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                }
-                .padding()
-            }
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
-        .edgesIgnoringSafeArea(.all)
-    }
-
-    /// Route visibility toggle settings.
-    private var routeVisibilitySettings: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Route Visibility")
-                .font(.headline)
-                .padding(.bottom, 4)
-
-            Toggle("Show Walking Routes", isOn: $showWalkingRoutes)
-                .onChange(of: showWalkingRoutes) { _, _ in
-                    updateFilteredRoutes()
-                }
-
-            Toggle("Show Running Routes", isOn: $showRunningRoutes)
-                .onChange(of: showRunningRoutes) { _, _ in
-                    updateFilteredRoutes()
-                }
-
-            Toggle("Show Cycling Routes", isOn: $showCyclingRoutes)
-                .onChange(of: showCyclingRoutes) { _, _ in
-                    updateFilteredRoutes()
-                }
-        }
     }
 
     // MARK: - Tab Content Section
@@ -308,6 +161,11 @@ struct SheetView: View {
                 // Sync status section
                 syncStatusSection
 
+                // First-time tips (conditionally shown)
+                if showFirstTimeTips, filteredRoutes.isEmpty {
+                    firstTimeTipsSection
+                }
+
                 // Only show route toggles in non-search mode for quick filtering
 //                if !isSearchActive {
 //                    routeToggleSection
@@ -319,9 +177,62 @@ struct SheetView: View {
             .padding(.horizontal)
             .padding(.top, 8)
         }
-        .overlay(
-            isShowingSettingsPanel ? settingsOverlay : nil
-        )
+    }
+
+    // MARK: - First-Time Tips Section
+
+    /// Tips section shown to first-time users
+    private var firstTimeTipsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Tips for Getting Started")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    withAnimation {
+                        showFirstTimeTips = false
+                    }
+                    updateFilteredRoutes()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 20))
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                tipRow(icon: "figure.walk", text: "Toggle route types using the filter buttons")
+                tipRow(icon: "arrow.triangle.2.circlepath", text: "Sync with HealthKit to see your workout routes")
+                tipRow(icon: "calendar", text: "Filter routes by name or date using the search bar")
+                tipRow(icon: "hand.tap", text: "Tap on a route to see it on the map")
+                tipRow(icon: "arrow.clockwise", text: "Tap route toggles to refresh the UI")
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue.opacity(0.1))
+            )
+        }
+        .padding(.vertical, 8)
+        .transition(.opacity)
+    }
+
+    /// Individual tip row
+    private func tipRow(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.blue)
+                .frame(width: 24, height: 20)
+
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+
+            Spacer()
+        }
     }
 
     // MARK: - Route Tab Subviews
@@ -330,7 +241,7 @@ struct SheetView: View {
     private var syncStatusSection: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Route Data")
+                Text("Route Toggles")
                     .font(.headline)
                 Spacer()
 
@@ -561,7 +472,12 @@ struct SheetView: View {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: isOn.wrappedValue ? .bold : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
-                    .shadow(color: isOn.wrappedValue ? color.opacity(0.3) : .clear, radius: 2, x: 0, y: 0) // Reduced shadow
+                    .shadow(
+                        color: isOn.wrappedValue ? color.opacity(0.3) : .clear,
+                        radius: 2,
+                        x: 0,
+                        y: 0
+                    ) // Reduced shadow
                     .scaleEffect(isOn.wrappedValue ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn.wrappedValue)
 
@@ -570,7 +486,12 @@ struct SheetView: View {
                     .font(.system(size: 22, weight: isOn.wrappedValue ? .bold : .regular))
                     .foregroundColor(isOn.wrappedValue ? color : .gray)
                     .contentTransition(.numericText(countsDown: false))
-                    .shadow(color: isOn.wrappedValue ? color.opacity(0.2) : .clear, radius: 1, x: 0, y: 0) // Reduced shadow
+                    .shadow(
+                        color: isOn.wrappedValue ? color.opacity(0.2) : .clear,
+                        radius: 1,
+                        x: 0,
+                        y: 0
+                    ) // Reduced shadow
                     .scaleEffect(isOn.wrappedValue ? 1.1 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isOn.wrappedValue)
 
@@ -735,6 +656,13 @@ struct SheetView: View {
                     // Update filtered routes AFTER syncData has finished and potentially
                     // updated the HealthKitManager's published properties
                     updateFilteredRoutes()
+
+                    // Hide first-time tips after successful sync
+                    if showFirstTimeTips {
+                        withAnimation {
+                            showFirstTimeTips = false
+                        }
+                    }
                 }
             } catch {
                 // Handle any errors from syncData
@@ -821,63 +749,59 @@ struct SheetView: View {
     }
 }
 
-//
-// #Preview {
-//    SampleView(
-//        healthKitManager: HealthKitManager(), // Replace with a mock if needed
-//        showWalkingRoutes: .constant(true),
-//        showRunningRoutes: .constant(true),
-//        showCyclingRoutes: .constant(true),
-//        selectedFilterDate: .constant(nil),
-//        onOpenAppTap: {},
-//        onNoteTap: {},
-//        onPetalTap: {},
-//        onDateFilterChanged: nil
-//    )
-// }
-//
-// #Preview {
-//    SampleView(
-//        healthKitManager: HealthKitManager(), // Replace with a mock if needed
-//        showWalkingRoutes: .constant(true),
-//        showRunningRoutes: .constant(true),
-//        showCyclingRoutes: .constant(true),
-//        selectedFilterDate: .constant(nil),
-//        onOpenAppTap: {},
-//        onNoteTap: {},
-//        onPetalTap: {},
-//        onDateFilterChanged: nil
-//    )
-//    .preferredColorScheme(.dark)
-// }
+import SwiftUI
 
-// MARK: - Extensions
-
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
-    }
-}
-
-/// Add this custom button style for better press animation
+/// A custom button style that scales the button slightly when pressed
+/// for a satisfying tactile feel.
 struct ScaleButtonStyle: ButtonStyle {
+    /// The amount to scale down when pressed (default is 0.96)
+    var scaleFactor: CGFloat = 0.96
+
+    /// The animation duration for the press effect (default is 0.2 seconds)
+    var duration: Double = 0.2
+
+    /// The animation damping for the press effect (default is 0.7)
+    var dampingFraction: Double = 0.7
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? scaleFactor : 1)
+            .animation(.spring(response: duration, dampingFraction: dampingFraction), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Usage Examples
+
+extension ScaleButtonStyle {
+    /// A subtle scale effect
+    static var subtle: ScaleButtonStyle {
+        ScaleButtonStyle(scaleFactor: 0.98, duration: 0.15, dampingFraction: 0.8)
+    }
+
+    /// A more pronounced scale effect
+    static var pronounced: ScaleButtonStyle {
+        ScaleButtonStyle(scaleFactor: 0.92, duration: 0.25, dampingFraction: 0.6)
+    }
+}
+
+// MARK: - View Extension
+
+extension View {
+    /// Apply the scale button style with custom parameters
+    /// - Parameters:
+    ///   - scaleFactor: The amount to scale down when pressed
+    ///   - duration: The animation duration for the press effect
+    ///   - dampingFraction: The animation damping for the press effect
+    /// - Returns: A view with the scale button style applied
+    func scaleButtonStyle(
+        scaleFactor: CGFloat = 0.96,
+        duration: Double = 0.2,
+        dampingFraction: Double = 0.7
+    ) -> some View {
+        buttonStyle(ScaleButtonStyle(
+            scaleFactor: scaleFactor,
+            duration: duration,
+            dampingFraction: dampingFraction
+        ))
     }
 }

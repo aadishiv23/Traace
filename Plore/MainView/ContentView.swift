@@ -10,14 +10,7 @@ import MapKit
 import PhotosUI
 import SwiftUI
 
-// The main view displaying a Map and handling sheet presentations & navigation.
-// Ensures that `SampleView` reappears when returning to this screen.
-import MapKit
-import PhotosUI
-import SwiftUI
-
 /// The main view displaying a Map and handling sheet presentations & navigation.
-/// Ensures that `SampleView` reappears when returning to this screen.
 struct ContentView: View {
     // MARK: Properties
 
@@ -62,6 +55,14 @@ struct ContentView: View {
 
     /// MapCamera position state
     @State private var mapPosition: MapCameraPosition = .automatic
+
+    /// Show loading popup for first-time users
+    @State private var showInitialLoadingPopup = false
+
+    /// Binding to hasCompletedOnboarding from PloreApp
+    @Binding var hasCompletedOnboarding: Bool
+
+    @AppStorage("hasSeenLoadingPopup") private var hasSeenLoadingPopup: Bool = false
 
     /// The object that interfaces with HealthKit to fetch route data.
     @ObservedObject var healthKitManager = HealthKitManager()
@@ -110,6 +111,11 @@ struct ContentView: View {
                 ) {
                     EmptyView()
                 }
+
+                // First-time user loading popup
+                if showInitialLoadingPopup {
+                    initialLoadingPopup
+                }
             }
             // Primary sheet – SampleView.
             .sheet(isPresented: $showExampleSheet) {
@@ -153,6 +159,101 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Initial Loading Popup
+
+    private var initialLoadingPopup: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    // Close popup when tapping outside
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showInitialLoadingPopup = false
+                    }
+                }
+
+            // Popup content
+            VStack(spacing: 20) {
+                // Progress indicator and title
+                VStack(spacing: 16) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+
+                    Text("Getting Your Routes")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    Text("We're loading your workout routes from HealthKit. This may take a moment.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+
+                // Tips
+                VStack(alignment: .leading, spacing: 14) {
+                    routeTip(icon: "arrow.triangle.2.circlepath", text: "Press the Sync button to refresh your routes")
+                    routeTip(icon: "figure.walk", text: "Toggle route types using the route toggles on the sheet")
+                    routeTip(icon: "magnifyingglass", text: "Use the search bar to find specific routes")
+                }
+                .padding(.vertical, 10)
+
+                // Dismiss button
+                Button {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showInitialLoadingPopup = false
+                    }
+                } label: {
+                    Text("Got it")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [.blue, .cyan.opacity(0.8)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(16)
+                }
+                .padding(.top, 10)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+            )
+            .padding(.horizontal, 30)
+            .transition(.scale(scale: 0.85).combined(with: .opacity))
+        }
+    }
+
+    private func routeTip(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(.blue)
+                .frame(width: 24, height: 24)
+
+            Text(text)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
         }
     }
 
@@ -335,6 +436,7 @@ struct ContentView: View {
             showCyclingRoutes: $showCyclingRoutes,
             selectedFilterDate: $selectedFilterDate,
             focusedRoute: $focusedRoute,
+            hasCompletedOnboarding: $hasCompletedOnboarding,
             onOpenAppTap: {
                 updateFilteredRoutes()
             },
@@ -359,7 +461,7 @@ struct ContentView: View {
             onRouteSelected: { route in
                 // Focus on the selected route
                 focusedRoute = route
-                
+
                 // Dismiss the sheet to show the map fully
                 //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 //                    showExampleSheet = false
@@ -389,6 +491,23 @@ struct ContentView: View {
     }
 
     private func initializeView() async {
+        // Check if this is the first time after completing onboarding
+        if hasCompletedOnboarding && !hasSeenLoadingPopup {
+            withAnimation(.easeIn(duration: 0.3)) {
+                showInitialLoadingPopup = true
+            }
+            
+            // Mark as seen
+            hasSeenLoadingPopup = true
+            
+            // Auto-dismiss after 10 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    showInitialLoadingPopup = false
+                }
+            }
+        }
+
         showExampleSheet = true
 
         Task(priority: .high) {
@@ -456,5 +575,5 @@ struct ContentView: View {
 // MARK: - Preview
 
 #Preview {
-    ContentView()
+    ContentView(hasCompletedOnboarding: .constant(true))
 }

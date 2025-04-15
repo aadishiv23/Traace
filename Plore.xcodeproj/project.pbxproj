@@ -66,7 +66,7 @@
 		ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PloreTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		ACD046AD2D4A88EF002A2E77 /* Plore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Plore.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ACD046AD2D4A88EF002A2E77 /* Trace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Trace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD046BD2D4A88F1002A2E77 /* PloreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PloreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD046C72D4A88F1002A2E77 /* PloreUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PloreUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -166,7 +166,7 @@
 		ACD046AE2D4A88EF002A2E77 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				ACD046AD2D4A88EF002A2E77 /* Plore.app */,
+				ACD046AD2D4A88EF002A2E77 /* Trace.app */,
 				ACD046BD2D4A88F1002A2E77 /* PloreTests.xctest */,
 				ACD046C72D4A88F1002A2E77 /* PloreUITests.xctest */,
 				ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */,
@@ -268,7 +268,7 @@
 			packageProductDependencies = (
 			);
 			productName = Plore;
-			productReference = ACD046AD2D4A88EF002A2E77 /* Plore.app */;
+			productReference = ACD046AD2D4A88EF002A2E77 /* Trace.app */;
 			productType = "com.apple.product-type.application";
 		};
 		ACD046BC2D4A88F1002A2E77 /* PloreTests */ = {
@@ -783,7 +783,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = aadishivmalhotra.Plore;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Trace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -816,7 +816,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = aadishivmalhotra.Plore;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Trace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
