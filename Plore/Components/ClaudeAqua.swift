@@ -545,8 +545,9 @@ public struct ClaudeButtonColor {
     }
 }
 
-// MARK: - Button Size
+// MARK: - Improved Button Size
 
+/// Button size with responsive/adaptable options
 public struct ClaudeButtonSize {
     let verticalPadding: CGFloat
     let horizontalPadding: CGFloat
@@ -593,6 +594,139 @@ public struct ClaudeButtonSize {
             fontSize: font,
             iconSize: icon
         )
+    }
+    
+    /// Create an adaptable size based on container width
+    public static func adaptable(minWidth: CGFloat, maxWidth: CGFloat, containerWidth: CGFloat) -> ClaudeButtonSize {
+        // Calculate how far along the width range we are (0.0 to 1.0)
+        let widthRatio = min(max((containerWidth - minWidth) / (maxWidth - minWidth), 0.0), 1.0)
+        
+        // Interpolate between small and large sizes
+        return ClaudeButtonSize(
+            verticalPadding: lerp(start: small.verticalPadding, end: large.verticalPadding, amount: widthRatio),
+            horizontalPadding: lerp(start: small.horizontalPadding, end: large.horizontalPadding, amount: widthRatio),
+            fontSize: lerp(start: small.fontSize, end: large.fontSize, amount: widthRatio),
+            iconSize: lerp(start: small.iconSize, end: large.iconSize, amount: widthRatio)
+        )
+    }
+    
+    /// Create an adaptable size based on dynamic type settings
+    public static func adaptableForDynamicType(baseSize: ClaudeButtonSize = .medium, dynamicTypeSize: DynamicTypeSize) -> ClaudeButtonSize {
+        // Scale factors based on dynamic type size
+        let scaleFactor: CGFloat
+        switch dynamicTypeSize {
+        case .xSmall:
+            scaleFactor = 0.8
+        case .small:
+            scaleFactor = 0.9
+        case .medium:
+            scaleFactor = 1.0
+        case .large:
+            scaleFactor = 1.1
+        case .xLarge:
+            scaleFactor = 1.2
+        case .xxLarge:
+            scaleFactor = 1.3
+        case .xxxLarge:
+            scaleFactor = 1.4
+        @unknown default:
+            scaleFactor = 1.0
+        }
+        
+        return ClaudeButtonSize(
+            verticalPadding: baseSize.verticalPadding * scaleFactor,
+            horizontalPadding: baseSize.horizontalPadding * scaleFactor,
+            fontSize: baseSize.fontSize * scaleFactor,
+            iconSize: baseSize.iconSize * scaleFactor
+        )
+    }
+    
+    /// Helper function to linearly interpolate between two values
+    private static func lerp(start: CGFloat, end: CGFloat, amount: CGFloat) -> CGFloat {
+        return start + (end - start) * amount
+    }
+}
+
+// Extension to make ClaudeButton work with GeometryReader for adaptive sizing
+extension ClaudeButton {
+    /// Creates a new adaptable ClaudeButton that adjusts size based on available width
+    /// - Parameters:
+    ///   - text: The text to display on the button
+    ///   - color: The primary color of the button
+    ///   - minWidth: The minimum width for sizing calculations
+    ///   - maxWidth: The maximum width for sizing calculations
+    ///   - rounded: Whether the button has rounded corners
+    ///   - icon: Optional icon to display on the button
+    ///   - style: The style of the button (modernAqua or glassy3D)
+    ///   - action: The action to perform when the button is tapped
+    /// - Returns: A view that wraps the ClaudeButton with adaptive sizing
+    public static func adaptable(
+        _ text: String,
+        color: ClaudeButtonColor = .blue,
+        minWidth: CGFloat = 300,
+        maxWidth: CGFloat = 500,
+        rounded: Bool = true,
+        icon: Image? = nil,
+        style: ClaudeButtonStyle = .modernAqua,
+        action: @escaping () -> Void
+    ) -> some View {
+        GeometryReader { geometry in
+            ClaudeButton(
+                text,
+                color: color,
+                size: .adaptable(minWidth: minWidth, maxWidth: maxWidth, containerWidth: geometry.size.width),
+                rounded: rounded,
+                icon: icon,
+                style: style,
+                action: action
+            )
+        }
+    }
+    
+    /// Creates a new ClaudeButton that adapts to dynamic type settings
+    /// - Parameters:
+    ///   - text: The text to display on the button
+    ///   - color: The primary color of the button
+    ///   - baseSize: The base size to scale from
+    ///   - rounded: Whether the button has rounded corners
+    ///   - icon: Optional icon to display on the button
+    ///   - style: The style of the button (modernAqua or glassy3D)
+    ///   - action: The action to perform when the button is tapped
+    /// - Returns: A view that wraps the ClaudeButton with accessibility scaling
+    public static func accessibleSize(
+        _ text: String,
+        color: ClaudeButtonColor = .blue,
+        baseSize: ClaudeButtonSize = .medium,
+        rounded: Bool = true,
+        icon: Image? = nil,
+        style: ClaudeButtonStyle = .modernAqua,
+        action: @escaping () -> Void
+    ) -> some View {
+        return DynamicTypeReader { typeSize in
+            ClaudeButton(
+                text,
+                color: color,
+                size: .adaptableForDynamicType(baseSize: baseSize, dynamicTypeSize: typeSize),
+                rounded: rounded,
+                icon: icon,
+                style: style,
+                action: action
+            )
+        }
+    }
+}
+
+// Helper view to read dynamic type size
+struct DynamicTypeReader<Content: View>: View {
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    let content: (DynamicTypeSize) -> Content
+    
+    init(@ViewBuilder content: @escaping (DynamicTypeSize) -> Content) {
+        self.content = content
+    }
+    
+    var body: some View {
+        content(dynamicTypeSize)
     }
 }
 
