@@ -118,14 +118,16 @@ struct SheetView: View {
             }
         }
         .onAppear {
-            performSync()
             updateFilteredRoutes()
-
+            performSync()
             if hasCompletedOnboarding, !hasSeenTips {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showFirstTimeTips = true
                     hasSeenTips = true
                 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                updateFilteredRoutes()
             }
         }
         // Listen to loading state so we can show/hide the bar.
