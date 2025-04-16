@@ -415,12 +415,20 @@ struct ContentView: View {
                 updateFilteredRoutes() // Update filtered routes immediately
             }
         } label: {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(isActive ? color : .gray)
-                .frame(width: 44, height: 44)
-                .scaleEffect(isActive ? 1.1 : 1.0)
-                .symbolEffect(.wiggle, value: isActive)
+            if #available(iOS 18.0, *) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(isActive ? color : .gray)
+                    .frame(width: 44, height: 44)
+                    .scaleEffect(isActive ? 1.1 : 1.0)
+                    .symbolEffect(.bounce, value: isActive)
+            } else {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(isActive ? color : .gray)
+                    .frame(width: 44, height: 44)
+                    .scaleEffect(isActive ? 1.1 : 1.0)
+            }
         }
         .contentShape(Rectangle())
     }
