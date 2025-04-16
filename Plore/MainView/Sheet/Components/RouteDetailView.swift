@@ -693,7 +693,7 @@ class MapSnapshotGenerator {
             (dateString as NSString).draw(in: dateRect, withAttributes: dateAttributes)
 
             // Add app logo and branding
-            let logoText = "PLORE"
+            let logoText = "TRAACE"
             let logoAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 36, weight: .black),
                 .foregroundColor: UIColor.white

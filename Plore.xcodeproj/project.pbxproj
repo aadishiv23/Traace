@@ -6,32 +6,7 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		ACC1112C2D4BE99200FED96A /* PloreTracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
-		ACC111192D4BE99200FED96A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = ACD046A52D4A88EF002A2E77 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = ACC111082D4BE98F00FED96A;
-			remoteInfo = "PloreTracker Watch App";
-		};
-		ACC111232D4BE99200FED96A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = ACD046A52D4A88EF002A2E77 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = ACC111082D4BE98F00FED96A;
-			remoteInfo = "PloreTracker Watch App";
-		};
-		ACC1112A2D4BE99200FED96A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = ACD046A52D4A88EF002A2E77 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = ACC111082D4BE98F00FED96A;
-			remoteInfo = "PloreTracker Watch App";
-		};
 		ACD046BE2D4A88F1002A2E77 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = ACD046A52D4A88EF002A2E77 /* Project object */;
@@ -55,7 +30,6 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				ACC1112C2D4BE99200FED96A /* PloreTracker Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -63,30 +37,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PloreTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PloreTracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD046AD2D4A88EF002A2E77 /* Trace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Trace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD046BD2D4A88F1002A2E77 /* PloreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PloreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACD046C72D4A88F1002A2E77 /* PloreUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PloreUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		ACC1110A2D4BE98F00FED96A /* PloreTracker Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "PloreTracker Watch App";
-			sourceTree = "<group>";
-		};
-		ACC1111B2D4BE99200FED96A /* PloreTracker Watch AppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "PloreTracker Watch AppTests";
-			sourceTree = "<group>";
-		};
-		ACC111252D4BE99200FED96A /* PloreTracker Watch AppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "PloreTracker Watch AppUITests";
-			sourceTree = "<group>";
-		};
 		ACD046AF2D4A88EF002A2E77 /* Plore */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Plore;
@@ -105,27 +61,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		ACC111062D4BE98F00FED96A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC111152D4BE99200FED96A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC1111F2D4BE99200FED96A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		ACD046AA2D4A88EF002A2E77 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -156,9 +91,6 @@
 				ACD046AF2D4A88EF002A2E77 /* Plore */,
 				ACD046C02D4A88F1002A2E77 /* PloreTests */,
 				ACD046CA2D4A88F1002A2E77 /* PloreUITests */,
-				ACC1110A2D4BE98F00FED96A /* PloreTracker Watch App */,
-				ACC1111B2D4BE99200FED96A /* PloreTracker Watch AppTests */,
-				ACC111252D4BE99200FED96A /* PloreTracker Watch AppUITests */,
 				ACD046AE2D4A88EF002A2E77 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -169,9 +101,6 @@
 				ACD046AD2D4A88EF002A2E77 /* Trace.app */,
 				ACD046BD2D4A88F1002A2E77 /* PloreTests.xctest */,
 				ACD046C72D4A88F1002A2E77 /* PloreUITests.xctest */,
-				ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */,
-				ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */,
-				ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -179,74 +108,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		ACC111082D4BE98F00FED96A /* PloreTracker Watch App */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = ACC111342D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch App" */;
-			buildPhases = (
-				ACC111052D4BE98F00FED96A /* Sources */,
-				ACC111062D4BE98F00FED96A /* Frameworks */,
-				ACC111072D4BE98F00FED96A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				ACC1110A2D4BE98F00FED96A /* PloreTracker Watch App */,
-			);
-			name = "PloreTracker Watch App";
-			packageProductDependencies = (
-			);
-			productName = "PloreTracker Watch App";
-			productReference = ACC111092D4BE98F00FED96A /* PloreTracker Watch App.app */;
-			productType = "com.apple.product-type.application";
-		};
-		ACC111172D4BE99200FED96A /* PloreTracker Watch AppTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = ACC111352D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch AppTests" */;
-			buildPhases = (
-				ACC111142D4BE99200FED96A /* Sources */,
-				ACC111152D4BE99200FED96A /* Frameworks */,
-				ACC111162D4BE99200FED96A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				ACC1111A2D4BE99200FED96A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				ACC1111B2D4BE99200FED96A /* PloreTracker Watch AppTests */,
-			);
-			name = "PloreTracker Watch AppTests";
-			packageProductDependencies = (
-			);
-			productName = "PloreTracker Watch AppTests";
-			productReference = ACC111182D4BE99200FED96A /* PloreTracker Watch AppTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		ACC111212D4BE99200FED96A /* PloreTracker Watch AppUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = ACC111362D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch AppUITests" */;
-			buildPhases = (
-				ACC1111E2D4BE99200FED96A /* Sources */,
-				ACC1111F2D4BE99200FED96A /* Frameworks */,
-				ACC111202D4BE99200FED96A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				ACC111242D4BE99200FED96A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				ACC111252D4BE99200FED96A /* PloreTracker Watch AppUITests */,
-			);
-			name = "PloreTracker Watch AppUITests";
-			packageProductDependencies = (
-			);
-			productName = "PloreTracker Watch AppUITests";
-			productReference = ACC111222D4BE99200FED96A /* PloreTracker Watch AppUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		ACD046AC2D4A88EF002A2E77 /* Plore */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = ACD046D12D4A88F1002A2E77 /* Build configuration list for PBXNativeTarget "Plore" */;
@@ -259,7 +120,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				ACC1112B2D4BE99200FED96A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				ACD046AF2D4A88EF002A2E77 /* Plore */,
@@ -327,17 +187,6 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					ACC111082D4BE98F00FED96A = {
-						CreatedOnToolsVersion = 16.2;
-					};
-					ACC111172D4BE99200FED96A = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = ACC111082D4BE98F00FED96A;
-					};
-					ACC111212D4BE99200FED96A = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = ACC111082D4BE98F00FED96A;
-					};
 					ACD046AC2D4A88EF002A2E77 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -368,35 +217,11 @@
 				ACD046AC2D4A88EF002A2E77 /* Plore */,
 				ACD046BC2D4A88F1002A2E77 /* PloreTests */,
 				ACD046C62D4A88F1002A2E77 /* PloreUITests */,
-				ACC111082D4BE98F00FED96A /* PloreTracker Watch App */,
-				ACC111172D4BE99200FED96A /* PloreTracker Watch AppTests */,
-				ACC111212D4BE99200FED96A /* PloreTracker Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		ACC111072D4BE98F00FED96A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC111162D4BE99200FED96A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC111202D4BE99200FED96A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		ACD046AB2D4A88EF002A2E77 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -421,27 +246,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		ACC111052D4BE98F00FED96A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC111142D4BE99200FED96A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		ACC1111E2D4BE99200FED96A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		ACD046A92D4A88EF002A2E77 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -466,21 +270,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		ACC1111A2D4BE99200FED96A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = ACC111082D4BE98F00FED96A /* PloreTracker Watch App */;
-			targetProxy = ACC111192D4BE99200FED96A /* PBXContainerItemProxy */;
-		};
-		ACC111242D4BE99200FED96A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = ACC111082D4BE98F00FED96A /* PloreTracker Watch App */;
-			targetProxy = ACC111232D4BE99200FED96A /* PBXContainerItemProxy */;
-		};
-		ACC1112B2D4BE99200FED96A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = ACC111082D4BE98F00FED96A /* PloreTracker Watch App */;
-			targetProxy = ACC1112A2D4BE99200FED96A /* PBXContainerItemProxy */;
-		};
 		ACD046BF2D4A88F1002A2E77 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = ACD046AC2D4A88EF002A2E77 /* Plore */;
@@ -494,150 +283,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		ACC1112E2D4BE99200FED96A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "PloreTracker Watch App/PloreTracker Watch App.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"PloreTracker Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PloreTracker;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app requires permission to read your HealthKit data to display your walk trails on the map.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app requires permission to write to your HealthKit data to save your walk paths.";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = aadishivmalhotra.Plore;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = aadishivmalhotra.Plore.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Debug;
-		};
-		ACC1112F2D4BE99200FED96A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "PloreTracker Watch App/PloreTracker Watch App.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"PloreTracker Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PloreTracker;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "The app requires permission to read your HealthKit data to display your walk trails on the map.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "The app requires permission to write to your HealthKit data to save your walk paths.";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = aadishivmalhotra.Plore;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = aadishivmalhotra.Plore.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Release;
-		};
-		ACC111302D4BE99200FED96A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "aadishivmalhotra.PloreTracker-Watch-AppTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PloreTracker Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PloreTracker Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Debug;
-		};
-		ACC111312D4BE99200FED96A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "aadishivmalhotra.PloreTracker-Watch-AppTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PloreTracker Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PloreTracker Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Release;
-		};
-		ACC111322D4BE99200FED96A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "aadishivmalhotra.PloreTracker-Watch-AppUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "PloreTracker Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Debug;
-		};
-		ACC111332D4BE99200FED96A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VNWQXUY4G;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "aadishivmalhotra.PloreTracker-Watch-AppUITests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				TEST_TARGET_NAME = "PloreTracker Watch App";
-				WATCHOS_DEPLOYMENT_TARGET = 11.2;
-			};
-			name = Release;
-		};
 		ACD046CF2D4A88F1002A2E77 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -898,33 +543,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		ACC111342D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch App" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ACC1112E2D4BE99200FED96A /* Debug */,
-				ACC1112F2D4BE99200FED96A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		ACC111352D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch AppTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ACC111302D4BE99200FED96A /* Debug */,
-				ACC111312D4BE99200FED96A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		ACC111362D4BE99200FED96A /* Build configuration list for PBXNativeTarget "PloreTracker Watch AppUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				ACC111322D4BE99200FED96A /* Debug */,
-				ACC111332D4BE99200FED96A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		ACD046A82D4A88EF002A2E77 /* Build configuration list for PBXProject "Plore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
