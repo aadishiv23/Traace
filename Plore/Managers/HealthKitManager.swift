@@ -23,7 +23,7 @@ class HealthKitManager: ObservableObject {
     @Published var walkingRoutes: [[CLLocation]] = []
     @Published var runningRoutes: [[CLLocation]] = []
     @Published var cyclingRoutes: [[CLLocation]] = []
-    
+
     /// RouteInfo objects with names and metadata
     @Published var walkingRouteInfos: [RouteInfo] = []
     @Published var runningRouteInfos: [RouteInfo] = []
@@ -33,6 +33,15 @@ class HealthKitManager: ObservableObject {
     @Published var walkingPolylines: [MKPolyline] = []
     @Published var runningPolylines: [MKPolyline] = []
     @Published var cyclingPolylines: [MKPolyline] = []
+
+    /// Whether we’re currently loading/syncing routes.
+    @Published var isLoadingRoutes: Bool = false
+
+    /// How many workouts have finished loading so far.
+    @Published var loadedRouteCount: Int = 0
+
+    /// Total number of workouts we expect to load.
+    @Published var totalRouteCount: Int = 0
 
     /// Initializes HealthKitManager and loads routes.
     init() {
@@ -107,12 +116,23 @@ class HealthKitManager: ObservableObject {
 
                 if newWorkouts.isEmpty {
                     print("[HealthKitManager] syncData() - No new workouts find since last interval, returning.")
+                    await MainActor.run {
+                        self.isLoadingRoutes = false
+                        self.loadedRouteCount = 0
+                        self.totalRouteCount = 0
+                    }
                     return
                 }
 
                 print(
                     "[HealthKitManager] syncData() - Found \(newWorkouts.count) new workouts to sync. Starting background sync..."
                 )
+
+                await MainActor.run {
+                    self.isLoadingRoutes = true
+                    self.loadedRouteCount = 0
+                    self.totalRouteCount = newWorkouts.count
+                }
 
                 // Use TaskGroup to fetch concurrently
                 try await withThrowingTaskGroup(of: (HKWorkout, [[CLLocation]]).self) { group in
@@ -129,6 +149,10 @@ class HealthKitManager: ObservableObject {
                         for route in routes {
                             let simplified = simplifyRoute(locations: route, tolerance: 10)
                             coreDataManager.addRoutePoints(simplified, to: cdWorkout!, in: bgContext)
+                        }
+
+                        await MainActor.run {
+                            self.loadedRouteCount += 1
                         }
                     }
                 }
@@ -155,7 +179,7 @@ class HealthKitManager: ObservableObject {
         var walking = [[CLLocation]]()
         var running = [[CLLocation]]()
         var cycling = [[CLLocation]]()
-        
+
         var walkingInfos = [RouteInfo]()
         var runningInfos = [RouteInfo]()
         var cyclingInfos = [RouteInfo]()
@@ -186,7 +210,7 @@ class HealthKitManager: ObservableObject {
 
             let sortedPoints = points.sorted { ($0.timestamp ?? Date.distantPast) < ($1.timestamp ?? Date.distantPast) }
             let locations = sortedPoints.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
-            
+
             // Create a RouteInfo object with date from the workout
             let routeDate = cdWorkout.startDate ?? Date()
             let routeName = cdWorkout.name
@@ -211,7 +235,7 @@ class HealthKitManager: ObservableObject {
             self.walkingRoutes = walking
             self.runningRoutes = running
             self.cyclingRoutes = cycling
-            
+
             self.walkingRouteInfos = walkingInfos
             self.runningRouteInfos = runningInfos
             self.cyclingRouteInfos = cyclingInfos
@@ -236,6 +260,23 @@ class HealthKitManager: ObservableObject {
 
     func fetchWorkoutRoutesConcurrently() {
         Task(priority: .high) {
+            // 🚩 initialize progress for initial load
+            await MainActor.run {
+                self.isLoadingRoutes = true
+                self.loadedRouteCount = 0
+                // estimate total by summing counts of each type
+                Task {
+                    let walking = try? await self.fetchWorkouts(of: .walking)
+                    let running = try? await self.fetchWorkouts(of: .running)
+                    let cycling = try? await self.fetchWorkouts(of: .cycling)
+                    await MainActor.run {
+                        self.totalRouteCount = (walking?.count ?? 0)
+                            + (running?.count ?? 0)
+                            + (cycling?.count ?? 0)
+                    }
+                }
+            }
+
             let workoutTypes: [HKWorkoutActivityType] = [.walking, .running, .cycling]
 
             let bgContext = coreDataManager.persistenceContainer.newBackgroundContext()
@@ -258,6 +299,10 @@ class HealthKitManager: ObservableObject {
                             let simplified = simplifyRoute(locations: route, tolerance: 10)
                             coreDataManager.addRoutePoints(simplified, to: cdWorkout!, in: bgContext)
                         }
+
+                        await MainActor.run {
+                            self.loadedRouteCount += 1
+                        }
                     }
                 } catch {
                     print("❌ Error fetching \(type) workouts or routes: \(error)")
@@ -272,6 +317,10 @@ class HealthKitManager: ObservableObject {
 
             let mainThreadWorkouts = await coreDataManager.fetchAllWorkouts()
             self.processCoreDataWorkouts(mainThreadWorkouts)
+
+            await MainActor.run {
+                self.isLoadingRoutes = false
+            }
         }
     }
 
@@ -398,93 +447,98 @@ class HealthKitManager: ObservableObject {
 extension HealthKitManager {
 
     func filterRoutesByDate(date: Date?) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
-        guard let date = date else {
+        guard let date else {
             return (walkingPolylines, runningPolylines, cyclingPolylines)
         }
-        
+
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        
+
         return filterRoutesByDateRange(start: startOfDay, end: endOfDay)
     }
 
-    func filterRoutesByDateRange(start: Date, end: Date) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
+    func filterRoutesByDateRange(
+        start: Date,
+        end: Date
+    ) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
         let filteredWalking = filterRoutes(routes: walkingRoutes, polylines: walkingPolylines, start: start, end: end)
         let filteredRunning = filterRoutes(routes: runningRoutes, polylines: runningPolylines, start: start, end: end)
         let filteredCycling = filterRoutes(routes: cyclingRoutes, polylines: cyclingPolylines, start: start, end: end)
-        
+
         return (filteredWalking, filteredRunning, filteredCycling)
     }
 
     private func filterRoutes(routes: [[CLLocation]], polylines: [MKPolyline], start: Date, end: Date) -> [MKPolyline] {
         var filteredPolylines: [MKPolyline] = []
-        
+
         for (index, route) in routes.enumerated() {
             if index < polylines.count, let firstLocation = route.first,
-               firstLocation.timestamp >= start && firstLocation.timestamp < end {
+               firstLocation.timestamp >= start, firstLocation.timestamp < end
+            {
                 filteredPolylines.append(polylines[index])
             }
         }
-        
+
         return filteredPolylines
     }
-    
+
     // New methods for working with named routes
-    
+
     /// Updates the name of a route
     func updateRouteName(id: UUID, newName: String) {
         var updated = false
-        
+
         // Update walking routes
         if let index = walkingRouteInfos.firstIndex(where: { $0.id == id }) {
             walkingRouteInfos[index].name = newName
             updated = true
-            
+
             // Find the equivalent workout in Core Data by comparing dates
             // This is a simplification - ideally we'd have a direct reference
             let date = walkingRouteInfos[index].date
             saveRouteNameToCore(type: .walking, date: date, name: newName)
         }
-        
+
         // Update running routes
         if let index = runningRouteInfos.firstIndex(where: { $0.id == id }) {
             runningRouteInfos[index].name = newName
             updated = true
-            
+
             let date = runningRouteInfos[index].date
             saveRouteNameToCore(type: .running, date: date, name: newName)
         }
-        
+
         // Update cycling routes
         if let index = cyclingRouteInfos.firstIndex(where: { $0.id == id }) {
             cyclingRouteInfos[index].name = newName
             updated = true
-            
+
             let date = cyclingRouteInfos[index].date
             saveRouteNameToCore(type: .cycling, date: date, name: newName)
         }
-        
+
         if updated {
             // Notify observers that the data has changed
             objectWillChange.send()
         }
     }
-    
+
     /// Saves a route name to Core Data
     private func saveRouteNameToCore(type: HKWorkoutActivityType, date: Date, name: String) {
         Task {
             let workouts = await coreDataManager.fetchAllWorkouts()
-            
+
             // Find matching workout by type and date
             let typeString = String(type.rawValue)
-            
+
             let calendar = Calendar.current
             for workout in workouts {
                 if workout.type == typeString,
                    let workoutDate = workout.startDate,
                    let workoutId = workout.id,
-                   calendar.isDate(workoutDate, inSameDayAs: date) {
+                   calendar.isDate(workoutDate, inSameDayAs: date)
+                {
                     // Found a match, update the name
                     coreDataManager.updateWorkoutName(id: workoutId, newName: name)
                     break
@@ -492,26 +546,26 @@ extension HealthKitManager {
             }
         }
     }
-    
+
     /// Gets all routes filtered by date range
     func getAllRouteInfosByDateRange(start: Date, end: Date) -> [RouteInfo] {
         let walkingFiltered = walkingRouteInfos.filter { $0.date >= start && $0.date < end }
         let runningFiltered = runningRouteInfos.filter { $0.date >= start && $0.date < end }
         let cyclingFiltered = cyclingRouteInfos.filter { $0.date >= start && $0.date < end }
-        
+
         return walkingFiltered + runningFiltered + cyclingFiltered
     }
-    
+
     /// Gets all routes for a specific date
     func getAllRouteInfosByDate(date: Date?) -> [RouteInfo] {
-        guard let date = date else {
+        guard let date else {
             return walkingRouteInfos + runningRouteInfos + cyclingRouteInfos
         }
-        
+
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        
+
         return getAllRouteInfosByDateRange(start: startOfDay, end: endOfDay)
     }
 }

@@ -52,6 +52,9 @@ struct SheetView: View {
     /// Show first-time user tips
     @State private var showFirstTimeTips = false
 
+    /// Whether to show the loading bar in the sheet.
+    @State private var showLoadingProgress: Bool = false
+
     // Whether the Settings panel is showing.
     // @State private var isShowingSettingsPanel = false
 
@@ -85,6 +88,9 @@ struct SheetView: View {
     @State private var filteredRoutes: [RouteInfo] = []
     @State private var isEditingRouteName: UUID? = nil
     @State private var editingName: String = ""
+    
+    @State private var loadingRotation: Double = 0
+
 
     @AppStorage("hasSeenTips") private var hasSeenTips: Bool = false
 
@@ -96,6 +102,12 @@ struct SheetView: View {
             searchBarHeader
                 .padding(.top, 15)
                 .padding(.bottom, 5)
+
+            // MARK: Loading progress bar + counter
+
+            if showLoadingProgress {
+                loadingProgressView
+            }
 
             // Main tab content
             tabContentSection
@@ -113,6 +125,21 @@ struct SheetView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showFirstTimeTips = true
                     hasSeenTips = true
+                }
+            }
+        }
+        // Listen to loading state so we can show/hide the bar.
+        .onReceive(healthKitManager.$isLoadingRoutes) { isLoading in
+            if isLoading {
+                withAnimation(.spring(response: 0.3)) {
+                    showLoadingProgress = true
+                }
+            } else {
+                // Give user time to see completion state before hiding
+                DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
+                    withAnimation(.easeOut(duration: 0.4)) {
+                        showLoadingProgress = false
+                    }
                 }
             }
         }
@@ -612,6 +639,103 @@ struct SheetView: View {
         .accessibilityLabel(title)
         .accessibilityValue(isOn.wrappedValue ? "On" : "Off")
         .accessibilityHint("Double tap to toggle")
+    }
+
+    // MARK: - Loading Progress UI Component
+
+    /// Improved loading progress UI component with animation, better visual feedback,
+    /// and a more polished appearance
+    private var loadingProgressView: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Header with loading status and count
+            HStack {
+                HStack(spacing: 4) {
+                    // Animated loading indicator
+                    if healthKitManager.isLoadingRoutes {
+                        Circle()
+                            .trim(from: 0, to: 0.7)
+                            .stroke(Color.blue, lineWidth: 2)
+                            .frame(width: 14, height: 14)
+                            .rotationEffect(Angle(degrees: loadingRotation))
+                            .onAppear {
+                                withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)) {
+                                    loadingRotation = 360
+                                }
+                            }
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 14))
+                    }
+
+                    Text(healthKitManager.isLoadingRoutes ? "Loading routes..." : "Routes loaded")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(healthKitManager.isLoadingRoutes ? .primary : .green)
+                        .animation(.easeInOut, value: healthKitManager.isLoadingRoutes)
+                }
+
+                Spacer()
+
+                // Loading count with animated transition
+                Text("\(healthKitManager.loadedRouteCount) of \(healthKitManager.totalRouteCount)")
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(.secondary)
+                    .contentTransition(.numericText(countsDown: false))
+                    .animation(.easeInOut, value: healthKitManager.loadedRouteCount)
+            }
+
+            // Progress bar with gradient and animated fill
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(.systemGray5))
+                    .frame(height: 6)
+
+                // Filled portion with gradient
+                let progress = min(
+                    CGFloat(healthKitManager.loadedRouteCount) /
+                        max(CGFloat(healthKitManager.totalRouteCount), 1),
+                    1.0
+                )
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.blue, .cyan]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: max(progress * UIScreen.main.bounds.width - 40, 0), height: 6)
+                    .animation(.spring(response: 0.4), value: progress)
+            }
+
+            // Optional status message
+            if healthKitManager.isLoadingRoutes {
+                Text("Retrieving your workout location data...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 2)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.07), radius: 8, x: 0, y: 2)
+        )
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .transition(
+            .asymmetric(
+                insertion: .scale(scale: 0.95).combined(with: .opacity),
+                removal: .scale(scale: 0.95).combined(with: .opacity)
+            )
+        )
+        .onAppear {
+            // Reset rotation when view appears
+            loadingRotation = 0
+        }
     }
 
     // MARK: - Helper Functions
