@@ -88,9 +88,8 @@ struct SheetView: View {
     @State private var filteredRoutes: [RouteInfo] = []
     @State private var isEditingRouteName: UUID? = nil
     @State private var editingName: String = ""
-    
-    @State private var loadingRotation: Double = 0
 
+    @State private var loadingRotation: Double = 0
 
     @AppStorage("hasSeenTips") private var hasSeenTips: Bool = false
 
@@ -138,7 +137,7 @@ struct SheetView: View {
                 }
             } else {
                 // Give user time to see completion state before hiding
-                DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                     withAnimation(.easeOut(duration: 0.4)) {
                         showLoadingProgress = false
                     }
@@ -720,7 +719,6 @@ struct SheetView: View {
                     .padding(.top, 2)
             }
         }
-        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemBackground))
