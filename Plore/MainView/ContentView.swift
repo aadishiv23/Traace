@@ -14,6 +14,13 @@ import SwiftUI
 struct ContentView: View {
     // MARK: Properties
 
+    /// Route color theme in use
+    @State private var routeColorTheme: RouteColorTheme = .vibrant
+
+    private var currentRouteColors: (walking: Color, running: Color, cycling: Color) {
+        RouteColors.colors(for: routeColorTheme)
+    }
+
     /// Controls when the SampleView sheet is shown.
     @State private var showExampleSheet = false
 
@@ -303,17 +310,17 @@ struct ContentView: View {
             else {
                 if showWalkingRoutes {
                     ForEach(filteredWalkingPolylines, id: \.self) {
-                        MapPolyline($0).stroke(Color.blue, lineWidth: 3)
+                        MapPolyline($0).stroke(currentRouteColors.walking, lineWidth: 3)
                     }
                 }
                 if showRunningRoutes {
                     ForEach(filteredRunningPolylines, id: \.self) {
-                        MapPolyline($0).stroke(Color.red, lineWidth: 3)
+                        MapPolyline($0).stroke(currentRouteColors.running, lineWidth: 3)
                     }
                 }
                 if showCyclingRoutes {
                     ForEach(filteredCyclingPolylines, id: \.self) {
-                        MapPolyline($0).stroke(Color.green, lineWidth: 3)
+                        MapPolyline($0).stroke(currentRouteColors.cycling, lineWidth: 3)
                     }
                 }
             }
@@ -562,9 +569,9 @@ struct ContentView: View {
     /// Returns the color for a route type.
     private func routeTypeColor(for type: HKWorkoutActivityType) -> Color {
         switch type {
-        case .walking: .blue
-        case .running: .red
-        case .cycling: .green
+        case .walking: currentRouteColors.walking
+        case .running: currentRouteColors.running
+        case .cycling: currentRouteColors.cycling
         default: .gray
         }
     }

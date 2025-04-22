@@ -144,6 +144,15 @@ struct SheetView: View {
                 }
             }
         }
+        .onReceive(healthKitManager.$walkingRouteInfos) { _ in
+            updateFilteredRoutes()
+        }
+        .onReceive(healthKitManager.$runningRouteInfos) { _ in
+            updateFilteredRoutes()
+        }
+        .onReceive(healthKitManager.$cyclingRouteInfos) { _ in
+            updateFilteredRoutes()
+        }
     }
 
     // MARK: - Search Bar Header
