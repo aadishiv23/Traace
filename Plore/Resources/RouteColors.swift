@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Enum representing different color themes for route polylines
 enum RouteColorTheme: String, CaseIterable, Codable {
+    case `default` // Added default case
     case vibrant
     case pastel
     case night
@@ -19,6 +20,9 @@ enum RouteColorTheme: String, CaseIterable, Codable {
 struct RouteColors {
     static func colors(for theme: RouteColorTheme) -> (walking: Color, running: Color, cycling: Color) {
         switch theme {
+        case .default:
+            // Standard SwiftUI colors
+            return (walking: .blue, running: .red, cycling: .green)
         case .vibrant:
             return (walking: Color(hex: "#00B4FF"), running: Color(hex: "#FF4B4B"), cycling: Color(hex: "#4BFF7A"))
         case .pastel:

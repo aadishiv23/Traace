@@ -32,6 +32,9 @@ struct ContentView: View {
 
     @State private var navigateToPetal = false
 
+    /// Controls navigation to the theme settings.
+    @State private var showSettingsView = false
+
     /// Tracks if ExampleSheet was dismissed when navigating away.
     @State private var wasExampleSheetDismissed = false
 
@@ -88,7 +91,7 @@ struct ContentView: View {
                     focusedRoutePanel(route)
                 }
 
-                // Hidden navigation link for programmatic navigation.
+                // Hidden navigation links for programmatic navigation.
                 NavigationLink(
                     destination: Aqua(),
                     isActive: $navigateToNote
@@ -96,7 +99,6 @@ struct ContentView: View {
                     EmptyView()
                 }
 
-                // In ContentView, replace your NavigationLink with:
                 NavigationLink(
                     destination: RouteDetailView(route: focusedRoute ?? RouteInfo(
                         name: "",
@@ -105,16 +107,20 @@ struct ContentView: View {
                         locations: []
                     ))
                     .onDisappear {
-                        // When RouteDetailView disappears
                         DispatchQueue.main.async {
-                            // Show the sample sheet again
                             routeDetailDismissed = true
                             showExampleSheet = true
-                            // Clear focused route (optional, depending on your UX preference)
-                            // focusedRoute = nil
                         }
                     },
                     isActive: $showRouteDetailView
+                ) {
+                    EmptyView()
+                }
+
+                // Settings navigation link
+                NavigationLink(
+                    destination: RouteThemeSettingsView(selectedTheme: $routeColorTheme),
+                    isActive: $showSettingsView
                 ) {
                     EmptyView()
                 }
@@ -140,7 +146,6 @@ struct ContentView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .onChange(of: focusedRoute) { _, newRoute in
-                // When the focused route changes, update the map camera
                 if let route = newRoute {
                     let rect = route.polyline.boundingMapRect
                     let padding = rect.size.width * 0.2
@@ -157,10 +162,7 @@ struct ContentView: View {
             }
             .onChange(of: routeDetailDismissed) { _, dismissed in
                 if dismissed {
-                    // Reset the flag
                     routeDetailDismissed = false
-
-                    // Show the sample sheet again with a slight delay
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         showExampleSheet = true
                     }
@@ -168,6 +170,7 @@ struct ContentView: View {
             }
         }
     }
+
 
     // MARK: - Initial Loading Popup
 
@@ -387,28 +390,55 @@ struct ContentView: View {
     }
 
     /// Control button overlay.
+    /// Control button overlay.
     private var controlButtons: some View {
         VStack {
             Spacer()
-            HStack {
-                VStack(spacing: 0) {
-                    routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: .red)
-                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                    routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: .green)
-                    Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                    routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: .blue)
+
+            // Group the toggles + settings into a tiny VStack
+            VStack(spacing: 8) {
+                // 1) The three route toggles
+                HStack {
+                    VStack(spacing: 0) {
+                        routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: .red)
+                        Divider().frame(width: 44).background(Color.gray.opacity(0.6))
+                        routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: .green)
+                        Divider().frame(width: 44).background(Color.gray.opacity(0.6))
+                        routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: .blue)
+                    }
+                    .frame(width: 50)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(radius: 5)
+                    .padding(.leading, 10)
+
+                    Spacer()
                 }
-                .frame(width: 50)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .padding(.leading, 10)
-                .padding(.bottom, 360)
-                .shadow(radius: 5)
 
-                Spacer()
+                // 2) The settings button, right below the walk toggle
+                HStack {
+                    Button {
+                        // Dismiss the sheet first
+                        showExampleSheet = false
+                        // Then navigate
+                        showSettingsView = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .frame(width: 50, height: 50)
+                            .foregroundColor(.accentColor)
+                    }
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(radius: 5)
+                    .padding(.leading, 10)
+
+                    Spacer()
+                }
             }
+            // Push the whole stack up a bit from the bottom
+            .padding(.bottom, 400)
 
-            Spacer()
         }
     }
 
@@ -507,14 +537,14 @@ struct ContentView: View {
 
     private func initializeView() async {
         // Check if this is the first time after completing onboarding
-        if hasCompletedOnboarding && !hasSeenLoadingPopup {
+        if hasCompletedOnboarding, !hasSeenLoadingPopup {
             withAnimation(.easeIn(duration: 0.3)) {
                 showInitialLoadingPopup = true
             }
-            
+
             // Mark as seen
             hasSeenLoadingPopup = true
-            
+
             // Auto-dismiss after 10 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                 withAnimation(.easeOut(duration: 0.3)) {
