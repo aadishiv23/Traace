@@ -11,6 +11,12 @@ import MapKit
 import SwiftUI
 
 /// A detailed view for a single route with full-screen map and statistics
+import Foundation
+import HealthKit
+import MapKit
+import SwiftUI
+
+/// A detailed view for a single route with full-screen map and statistics
 struct RouteDetailView: View {
     // MARK: - Properties
 
@@ -22,9 +28,9 @@ struct RouteDetailView: View {
     @State private var mapStyle: MapStyle = .standard
     @State private var isStandardMap: Bool = true
 
-    @State private var isShareSheetPresented = false
     @State private var shareImage: UIImage?
     @State private var isGeneratingSnapshot = false
+    @State private var isPresentingShareCustomizer = false
 
     // MARK: - Initialization
 
@@ -94,9 +100,13 @@ struct RouteDetailView: View {
         }
         .edgesIgnoringSafeArea(.all)
         .navigationBarHidden(true) // This hides the navigation bar completely
-        .sheet(isPresented: $isShareSheetPresented) {
+        .fullScreenCover(isPresented: $isPresentingShareCustomizer) {
             if let image = shareImage {
-                ShareSheet(items: [image])
+                RouteShareCustomizer(
+                    baseImage: image,
+                    route: route,
+                    isPresented: $isPresentingShareCustomizer
+                )
             }
         }
         .overlay(
@@ -213,23 +223,7 @@ struct RouteDetailView: View {
                         color: routeTypeColor(for: route.type)
                     )
 
-//                    // Duration
-//                    StatCard(
-//                        value: "25",
-//                        unit: "min",
-//                        label: "Duration",
-//                        icon: "clock",
-//                        color: routeTypeColor(for: route.type)
-//                    )
-//
-//                    // Pace
-//                    StatCard(
-//                        value: "10:30",
-//                        unit: "mi/min",
-//                        label: "Pace",
-//                        icon: "speedometer",
-//                        color: routeTypeColor(for: route.type)
-//                    )
+                    // Other stat cards as needed
                 }
 
                 // Elevation profile placeholder
@@ -268,15 +262,32 @@ struct RouteDetailView: View {
                 }
                 .padding(.top, 8)
 
-                // Share button - Updated with functionality
+                // Share button - Updated with customization functionality
                 Button {
-                    shareRoute()
+                    // Show loading indicator
+                    isGeneratingSnapshot = true
+
+                    // Generate map snapshot
+                    let mapType: MKMapType = isStandardMap ? .standard : .hybrid
+
+                    MapSnapshotGenerator.generateRouteSnapshot(route: route, mapType: mapType) { image in
+                        // Hide loading indicator
+                        DispatchQueue.main.async {
+                            isGeneratingSnapshot = false
+
+                            if let image {
+                                // Instead of showing share sheet directly, show the customizer
+                                shareImage = image
+                                isPresentingShareCustomizer = true
+                            }
+                        }
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 16, weight: .semibold))
 
-                        Text("Share Route")
+                        Text("Customize & Share")
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .frame(maxWidth: .infinity)
@@ -374,28 +385,6 @@ struct RouteDetailView: View {
         // Convert to miles (or km based on locale)
         let distanceInMiles = totalDistance / 1609.34
         return String(format: "%.1f", distanceInMiles)
-    }
-
-    /// Share the route with a custom map image
-    private func shareRoute() {
-        // Show loading indicator
-        isGeneratingSnapshot = true
-
-        // Generate map snapshot
-        let mapType: MKMapType = isStandardMap ? .standard : .hybrid
-
-        MapSnapshotGenerator.generateRouteSnapshot(route: route, mapType: mapType) { image in
-            // Hide loading indicator
-            DispatchQueue.main.async {
-                isGeneratingSnapshot = false
-
-                if let image {
-                    // Set the share image and present share sheet
-                    shareImage = image
-                    isShareSheetPresented = true
-                }
-            }
-        }
     }
 }
 
