@@ -6,12 +6,14 @@ struct RouteThemeSettingsView: View {
     @Binding var selectedTheme: RouteColorTheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    // No use of @Environment(\.routeColorTheme) here; only use the binding
     
     private let themes: [RouteColorTheme] = RouteColorTheme.allCases
     @State private var animateSelection: RouteColorTheme? = nil
     
     // Animation states
     @State private var headerAppeared = false
+    @State private var customButtonAppeared = false
     @State private var cardsAppeared = false
     @State private var footerAppeared = false
     
@@ -22,6 +24,12 @@ struct RouteThemeSettingsView: View {
                 headerView
                     .opacity(headerAppeared ? 1 : 0)
                     .offset(y: headerAppeared ? 0 : -30)
+                
+                // Custom Colors Button - Moved to top section
+                customColorsButtonView
+                    .opacity(customButtonAppeared ? 1 : 0)
+                    .offset(y: customButtonAppeared ? 0 : 20)
+                    .padding(.vertical, 16)
                 
                 // Theme cards
                 themeCardsView
@@ -49,11 +57,15 @@ struct RouteThemeSettingsView: View {
                 headerAppeared = true
             }
             
-            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+            withAnimation(.easeOut(duration: 0.5).delay(0.15)) {
+                customButtonAppeared = true
+            }
+            
+            withAnimation(.easeOut(duration: 0.6).delay(0.2)) {
                 cardsAppeared = true
             }
             
-            withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
+            withAnimation(.easeOut(duration: 0.5).delay(0.3)) {
                 footerAppeared = true
             }
         }
@@ -91,7 +103,32 @@ struct RouteThemeSettingsView: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 8)
         }
-        .padding(.bottom, 20)
+        .padding(.bottom, 10)
+    }
+    
+    // MARK: - Custom Colors Button (Moved from footer)
+    private var customColorsButtonView: some View {
+        NavigationLink(destination: CustomColorPickerView(selectedTheme: $selectedTheme)) {
+            HStack {
+                Image(systemName: "eyedropper.halffull")
+                    .font(.system(size: 16))
+                
+                Text("Create Custom Color Theme")
+                    .font(.headline)
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [.blue, .cyan.opacity(0.8)]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 2)
+        }
     }
     
     // MARK: - Theme Cards
@@ -185,13 +222,6 @@ struct RouteThemeSettingsView: View {
                 .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
                 .opacity(isSelected ? (isAnimating ? 0.8 : 1.0) : 0)
         )
-        // Apply a subtle 3D transform when selected
-        .rotation3DEffect(
-            isSelected ? Angle(degrees: isAnimating ? 2 : 0) : Angle(degrees: 0),
-            axis: (x: 0, y: 1, z: 0),
-            anchor: .leading,
-            perspective: 0.5
-        )
         // Scale effect with better spring animation
         .scaleEffect(isSelected ? (isAnimating ? 0.98 : 1.0) : 0.97)
         // Add a brightness effect on selection
@@ -204,6 +234,9 @@ struct RouteThemeSettingsView: View {
             Text("Your current selection: \(selectedTheme.displayName)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+            
+            Divider()
+                .padding(.vertical, 8)
             
             Text("Changes are applied immediately")
                 .font(.caption)
@@ -280,6 +313,7 @@ struct RouteThemeMapPreview: View {
         }
     }
     
+    // Sample polylines for each activity
     private var walkingPolyline: MKPolyline {
         let coordinates = [
             CLLocationCoordinate2D(latitude: 37.776, longitude: -122.419),
@@ -291,7 +325,7 @@ struct RouteThemeMapPreview: View {
         ]
         return MKPolyline(coordinates: coordinates, count: coordinates.count)
     }
-
+    
     private var runningPolyline: MKPolyline {
         let coordinates = [
             CLLocationCoordinate2D(latitude: 37.778, longitude: -122.421),
@@ -303,7 +337,7 @@ struct RouteThemeMapPreview: View {
         ]
         return MKPolyline(coordinates: coordinates, count: coordinates.count)
     }
-
+    
     private var cyclingPolyline: MKPolyline {
         let coordinates = [
             CLLocationCoordinate2D(latitude: 37.774, longitude: -122.422),
@@ -316,7 +350,6 @@ struct RouteThemeMapPreview: View {
         ]
         return MKPolyline(coordinates: coordinates, count: coordinates.count)
     }
-
 }
 
 struct PolylinePreviewPath: View {
@@ -364,6 +397,7 @@ extension RouteColorTheme {
         case .pastel: return "Pastel Tones"
         case .night: return "Night Mode"
         case .earth: return "Earthy Hues"
+        case .custom: return "Custom Colors"
         }
     }
     
@@ -374,6 +408,7 @@ extension RouteColorTheme {
         case .pastel: return "Soft, calming tones for a gentle, relaxed map view."
         case .night: return "Dark-friendly colors optimized for low-light environments."
         case .earth: return "Natural, muted hues inspired by landscapes and terrain."
+        case .custom: return "Your personally selected colors for each route type."
         }
     }
 }
