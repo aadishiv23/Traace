@@ -16,6 +16,7 @@ struct RouteDetailView: View {
 
     let route: RouteInfo
 
+    @Environment(\.routeColorTheme) private var routeColorTheme
     @Environment(\.dismiss) private var dismiss
     @State private var mapPosition: MapCameraPosition
     @State private var mapStyle: MapStyle = .standard
@@ -331,11 +332,12 @@ struct RouteDetailView: View {
 
     /// Returns the color for a route type.
     private func routeTypeColor(for type: HKWorkoutActivityType) -> Color {
+        let colors = RouteColors.colors(for: routeColorTheme)
         switch type {
-        case .walking: .blue
-        case .running: .red
-        case .cycling: .green
-        default: .gray
+        case .walking: return colors.walking
+        case .running: return colors.running
+        case .cycling: return colors.cycling
+        default: return .gray
         }
     }
 

@@ -9,11 +9,12 @@ import SwiftUI
 
 /// Enum representing different color themes for route polylines
 enum RouteColorTheme: String, CaseIterable, Codable {
-    case `default` // Added default case
+    case `default` // Standard SwiftUI colors
     case vibrant
     case pastel
     case night
     case earth
+    case custom // Added custom case for user-defined colors
 }
 
 /// Centralized color palette for route polylines
@@ -31,7 +32,21 @@ struct RouteColors {
             return (walking: Color(hex: "#4A90E2"), running: Color(hex: "#D0021B"), cycling: Color(hex: "#417505"))
         case .earth:
             return (walking: Color(hex: "#8D8741"), running: Color(hex: "#659DBD"), cycling: Color(hex: "#DAAD86"))
+        case .custom:
+            // Retrieve custom colors from UserDefaults
+            return (
+                walking: Color(hex: UserDefaults.standard.string(forKey: "customWalkingColor") ?? "#00B4FF"),
+                running: Color(hex: UserDefaults.standard.string(forKey: "customRunningColor") ?? "#FF4B4B"),
+                cycling: Color(hex: UserDefaults.standard.string(forKey: "customCyclingColor") ?? "#4BFF7A")
+            )
         }
+    }
+    
+    // Save custom colors to UserDefaults
+    static func saveCustomColors(walking: Color, running: Color, cycling: Color) {
+        UserDefaults.standard.set(walking.toHex(), forKey: "customWalkingColor")
+        UserDefaults.standard.set(running.toHex(), forKey: "customRunningColor")
+        UserDefaults.standard.set(cycling.toHex(), forKey: "customCyclingColor")
     }
 }
 
@@ -58,6 +73,24 @@ extension Color {
             green: Double(g) / 255,
             blue: Double(b) / 255,
             opacity: Double(a) / 255
+        )
+    }
+    
+    /// Convert Color to hex string
+    func toHex() -> String {
+        guard let components = UIColor(self).cgColor.components else {
+            return "#000000"
+        }
+        
+        let r = components[0]
+        let g = components[1]
+        let b = components[2]
+        
+        return String(
+            format: "#%02X%02X%02X",
+            Int(r * 255),
+            Int(g * 255),
+            Int(b * 255)
         )
     }
 }

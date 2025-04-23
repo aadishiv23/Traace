@@ -22,6 +22,8 @@ import SwiftUI
 struct SheetView: View {
     // MARK: - Properties
 
+    @Environment(\.routeColorTheme) private var routeColorTheme
+
     /// Track the user's selected time interval.
     @State private var selectedSyncInterval: TimeInterval = 3600
 

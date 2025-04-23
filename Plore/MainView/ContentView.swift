@@ -14,8 +14,20 @@ import SwiftUI
 struct ContentView: View {
     // MARK: Properties
 
-    /// Route color theme in use
-    @State private var routeColorTheme: RouteColorTheme = .vibrant
+    /// Route color theme in use (persisted)
+    @AppStorage("routeColorTheme") private var routeColorThemeRaw: String = RouteColorTheme.vibrant.rawValue
+
+    private var routeColorTheme: RouteColorTheme {
+        get { RouteColorTheme(rawValue: routeColorThemeRaw) ?? .vibrant }
+        set { routeColorThemeRaw = newValue.rawValue }
+    }
+    
+    private var routeColorThemeBinding: Binding<RouteColorTheme> {
+        Binding<RouteColorTheme>(
+            get: { RouteColorTheme(rawValue: routeColorThemeRaw) ?? .vibrant },
+            set: { routeColorThemeRaw = $0.rawValue }
+        )
+    }
 
     private var currentRouteColors: (walking: Color, running: Color, cycling: Color) {
         RouteColors.colors(for: routeColorTheme)
@@ -119,7 +131,7 @@ struct ContentView: View {
 
                 // Settings navigation link
                 NavigationLink(
-                    destination: RouteThemeSettingsView(selectedTheme: $routeColorTheme),
+                    destination: RouteThemeSettingsView(selectedTheme: routeColorThemeBinding),
                     isActive: $showSettingsView
                 ) {
                     EmptyView()
@@ -134,7 +146,8 @@ struct ContentView: View {
             .sheet(isPresented: $showExampleSheet) {
                 sampleSheetContent
             }
-
+            // Inject the route color theme into the environment for all child views
+            .environment(\.routeColorTheme, routeColorTheme)
             // Secondary sheet – OpenAppView.
             .sheet(isPresented: $showOpenAppSheet, onDismiss: {
                 showExampleSheet = true
@@ -170,7 +183,6 @@ struct ContentView: View {
             }
         }
     }
-
 
     // MARK: - Initial Loading Popup
 
@@ -400,11 +412,12 @@ struct ContentView: View {
                 // 1) The three route toggles
                 HStack {
                     VStack(spacing: 0) {
-                        routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: .red)
+                        let colors = RouteColors.colors(for: routeColorTheme)
+                        routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: colors.running)
                         Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                        routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: .green)
+                        routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: colors.cycling)
                         Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                        routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: .blue)
+                        routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: colors.walking)
                     }
                     .frame(width: 50)
                     .background(.ultraThinMaterial)
@@ -423,8 +436,8 @@ struct ContentView: View {
                         // Then navigate
                         showSettingsView = true
                     } label: {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                        Image(systemName: "gear")
+                            .font(.system(size: 22, weight: .semibold))
                             .frame(width: 50, height: 50)
                             .foregroundColor(.accentColor)
                     }
@@ -438,7 +451,6 @@ struct ContentView: View {
             }
             // Push the whole stack up a bit from the bottom
             .padding(.bottom, 400)
-
         }
     }
 

@@ -34,6 +34,50 @@
             endingLineNumber = "320"
             landmarkName = "fetchWorkoutRoutesConcurrently()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "A7DEFE3D-BD27-4962-A6A4-1740699C78C1 - 804c592e05b37ecc"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(11) suspend resume partial function for closure #1 () async -&gt; () in Trace.HealthKitManager.fetchWorkoutRoutesConcurrently() -&gt; ()"
+                  moduleName = "Trace.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/aadishivmalhotra/Desktop/SwiftProjects/Plore/Plore/Managers/HealthKitManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "321"
+                  endingLineNumber = "321">
+               </Location>
+               <Location
+                  uuid = "A7DEFE3D-BD27-4962-A6A4-1740699C78C1 - e6e5e54b5c925b0f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(18) suspend resume partial function for closure #1 () async -&gt; () in Trace.HealthKitManager.fetchWorkoutRoutesConcurrently() -&gt; ()"
+                  moduleName = "Trace.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/aadishivmalhotra/Desktop/SwiftProjects/Plore/Plore/Managers/HealthKitManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "321"
+                  endingLineNumber = "321">
+               </Location>
+               <Location
+                  uuid = "A7DEFE3D-BD27-4962-A6A4-1740699C78C1 - 5da67b29b86db8a2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #3 @Swift.MainActor @Sendable () -&gt; () in closure #1 () async -&gt; () in Trace.HealthKitManager.fetchWorkoutRoutesConcurrently() -&gt; ()"
+                  moduleName = "Trace.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/aadishivmalhotra/Desktop/SwiftProjects/Plore/Plore/Managers/HealthKitManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "321"
+                  endingLineNumber = "321">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
