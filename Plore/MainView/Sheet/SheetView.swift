@@ -22,6 +22,8 @@ import SwiftUI
 struct SheetView: View {
     // MARK: - Properties
 
+    @Environment(\.routeColorTheme) private var routeColorTheme
+
     /// Track the user's selected time interval.
     @State private var selectedSyncInterval: TimeInterval = 3600
 
@@ -143,6 +145,15 @@ struct SheetView: View {
                     }
                 }
             }
+        }
+        .onReceive(healthKitManager.$walkingRouteInfos) { _ in
+            updateFilteredRoutes()
+        }
+        .onReceive(healthKitManager.$runningRouteInfos) { _ in
+            updateFilteredRoutes()
+        }
+        .onReceive(healthKitManager.$cyclingRouteInfos) { _ in
+            updateFilteredRoutes()
         }
     }
 
@@ -339,25 +350,27 @@ struct SheetView: View {
 
     /// Route count cards showing summary information.
     private var routeCountsCards: some View {
-        HStack(spacing: 20) {
+        let themeColors = RouteColors.colors(for: routeColorTheme)
+
+        return HStack(spacing: 20) {
             routeCountCard(
                 count: healthKitManager.runningRoutes.count,
                 title: "Running",
-                color: ActivityColors.color(for: .running, style: .standard),
+                color: themeColors.running,
                 icon: "figure.run",
                 isOn: $showRunningRoutes
             )
             routeCountCard(
                 count: healthKitManager.cyclingRoutes.count,
                 title: "Cycling",
-                color: ActivityColors.color(for: .cycling, style: .standard),
+                color: themeColors.cycling,
                 icon: "figure.outdoor.cycle",
                 isOn: $showCyclingRoutes
             )
             routeCountCard(
                 count: healthKitManager.walkingRoutes.count,
                 title: "Walking",
-                color: ActivityColors.color(for: .walking, style: .standard),
+                color: themeColors.walking,
                 icon: "figure.walk",
                 isOn: $showWalkingRoutes
             )
@@ -366,24 +379,25 @@ struct SheetView: View {
 
     /// Quick toggle buttons for route types.
     private var routeToggleSection: some View {
-        HStack(spacing: 12) {
+        let themeColors = RouteColors.colors(for: routeColorTheme)
+        return HStack(spacing: 12) {
             // Streamlined, elegant toggle buttons
             routeToggleButton(
                 title: "Running",
                 isOn: $showRunningRoutes,
-                color: .red,
+                color: themeColors.running,
                 icon: "figure.run"
             )
             routeToggleButton(
                 title: "Cycling",
                 isOn: $showCyclingRoutes,
-                color: .green,
+                color: themeColors.cycling,
                 icon: "figure.outdoor.cycle"
             )
             routeToggleButton(
                 title: "Walking",
                 isOn: $showWalkingRoutes,
-                color: .blue,
+                color: themeColors.walking,
                 icon: "figure.walk"
             )
         }

@@ -13,7 +13,7 @@ import SwiftUI
 /// A beautifully designed row displaying a route's information with collapsible content.
 struct CollapsibleRouteRow: View {
     // MARK: - Properties
-
+    @Environment(\.routeColorTheme) private var routeColorTheme
     let route: RouteInfo
     let isEditing: Bool
     @Binding var editingName: String
@@ -319,11 +319,12 @@ struct CollapsibleRouteRow: View {
 
     /// Returns the color for a route type.
     private func routeTypeColor(for type: HKWorkoutActivityType) -> Color {
+        let colors = RouteColors.colors(for: routeColorTheme)
         switch type {
-        case .walking: .blue
-        case .running: .red
-        case .cycling: .green
-        default: .gray
+        case .walking: return colors.walking
+        case .running: return colors.running
+        case .cycling: return colors.cycling
+        default: return .gray
         }
     }
 
