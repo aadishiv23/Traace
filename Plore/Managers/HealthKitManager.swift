@@ -96,13 +96,13 @@ class HealthKitManager: ObservableObject {
         }
     }
 
-    func syncData(interval: TimeInterval = 3600) {
+    func syncData(interval: TimeInterval = 3) {
         let lastSyncKey = "lastSyncDate"
         let lastSync = UserDefaults.standard.object(forKey: lastSyncKey) as? Date ?? .distantPast
 
         let now = Date()
 
-        guard now.timeIntervalSince(lastSync) > 3600 else {
+        guard now.timeIntervalSince(lastSync) > interval else {
             print("[HealthKitManager] syncDate() - Skipping sync as less than one hour has passed since last sync")
             return
         }
@@ -166,6 +166,10 @@ class HealthKitManager: ObservableObject {
                 UserDefaults.standard.set(Date(), forKey: "lastSyncDate")
 
                 print("[HealthKitManager] syncData() - ✅ Successfully synced \(newWorkouts.count) new workouts.")
+                
+                await MainActor.run {
+                    self.isLoadingRoutes = false
+                }
 
                 let mainThreadWorkouts = await coreDataManager.fetchAllWorkouts()
                 self.processCoreDataWorkouts(mainThreadWorkouts)
