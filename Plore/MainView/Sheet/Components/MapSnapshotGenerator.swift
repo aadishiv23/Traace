@@ -7,9 +7,23 @@ import HealthKit
 // MARK: - Map Snapshot Generator
 
 /// Helper class to generate visually appealing map snapshots
+import Foundation
+import MapKit
+import SwiftUI
+import UIKit
+import HealthKit
+
+// MARK: - Map Snapshot Generator
+
+/// Helper class to generate visually appealing map snapshots
 class MapSnapshotGenerator {
-    /// Generate a stylish snapshot of a route with all relevant markers
-    static func generateRouteSnapshot(
+    
+    /// Generate a snapshot with just the route map (no overlay)
+    /// - Parameters:
+    ///   - route: The route information
+    ///   - mapType: The type of map to display
+    ///   - completion: Callback with the generated image
+    static func generateCleanRouteSnapshot(
         route: RouteInfo,
         mapType: MKMapType,
         completion: @escaping (UIImage?) -> Void
@@ -28,7 +42,7 @@ class MapSnapshotGenerator {
         let options = MKMapSnapshotter.Options()
         options.region = MKCoordinateRegion(paddedRect)
         options.mapType = mapType
-        options.size = CGSize(width: 1200, height: 1200) // Even higher resolution for sharing
+        options.size = CGSize(width: 1200, height: 1200) // High resolution for sharing
         options.showsBuildings = true
 
         // Create the snapshotter
@@ -164,133 +178,7 @@ class MapSnapshotGenerator {
                 (finishText as NSString).draw(in: finishTextRect, withAttributes: finishAttributes)
             }
 
-            // Add stylish info card at the bottom
-            let cardHeight: CGFloat = 180
-            let cardWidth = snapshot.image.size.width
-            let cardY = snapshot.image.size.height - cardHeight
-
-            // Draw card background with gradient
-            let cardRect = CGRect(x: 0, y: cardY, width: cardWidth, height: cardHeight)
-
-            // Create gradient for card background
-            let colorSpace = CGColorSpaceCreateDeviceRGB()
-            let colors: [CGColor] = [
-                UIColor.black.withAlphaComponent(0.85).cgColor,
-                UIColor.black.withAlphaComponent(0.7).cgColor
-            ]
-            let locations: [CGFloat] = [0.0, 1.0]
-
-            if let gradient = CGGradient(
-                colorsSpace: colorSpace,
-                colors: colors as CFArray,
-                locations: locations
-            ) {
-                context.drawLinearGradient(
-                    gradient,
-                    start: CGPoint(x: cardRect.midX, y: cardRect.minY),
-                    end: CGPoint(x: cardRect.midX, y: cardRect.maxY),
-                    options: []
-                )
-            }
-
-            // Add a thin accent line at the top of the card
-            context.setFillColor(routeColor.cgColor)
-            context.fill(CGRect(x: 0, y: cardY, width: cardWidth, height: 4))
-
-            // Add distance with large stylish font
-            let distanceInMiles = self.calculateDistanceInMiles(for: route)
-            let distanceText = String(format: "%.1f", distanceInMiles)
-            let unitText = "MI"
-
-            // Draw large distance number
-            let distanceAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 60, weight: .black),
-                .foregroundColor: UIColor.white
-            ]
-
-            let distanceTextSize = (distanceText as NSString).size(withAttributes: distanceAttributes)
-            let distanceTextRect = CGRect(
-                x: 40,
-                y: cardY + 40,
-                width: distanceTextSize.width,
-                height: distanceTextSize.height
-            )
-
-            (distanceText as NSString).draw(in: distanceTextRect, withAttributes: distanceAttributes)
-
-            // Draw "MI" unit next to the number
-            let unitAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 30, weight: .heavy),
-                .foregroundColor: routeColor
-            ]
-
-            let unitTextSize = (unitText as NSString).size(withAttributes: unitAttributes)
-            let unitTextRect = CGRect(
-                x: distanceTextRect.maxX + 10,
-                y: distanceTextRect.midY - unitTextSize.height / 2 + 10, // align with middle of distance
-                width: unitTextSize.width,
-                height: unitTextSize.height
-            )
-
-            (unitText as NSString).draw(in: unitTextRect, withAttributes: unitAttributes)
-
-            // Add route name if available
-            let routeName = route.name ?? routeTypeName(for: route.type)
-            let routeNameAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
-                .foregroundColor: UIColor.white
-            ]
-
-            let routeNameRect = CGRect(
-                x: 40,
-                y: distanceTextRect.maxY + 5,
-                width: cardWidth - 80,
-                height: 30
-            )
-
-            (routeName as NSString).draw(in: routeNameRect, withAttributes: routeNameAttributes)
-
-            // Add date
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateStyle = .medium
-            let dateString = dateFormatter.string(from: route.date)
-
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 18, weight: .medium),
-                .foregroundColor: UIColor.lightGray
-            ]
-
-            let dateRect = CGRect(
-                x: 40,
-                y: routeNameRect.maxY + 5,
-                width: cardWidth - 80,
-                height: 25
-            )
-
-            (dateString as NSString).draw(in: dateRect, withAttributes: dateAttributes)
-
-            // Add app logo and branding
-            let logoText = "TRAACE"
-            let logoAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 36, weight: .black),
-                .foregroundColor: UIColor.white
-            ]
-
-            let logoTextSize = (logoText as NSString).size(withAttributes: logoAttributes)
-            let logoTextRect = CGRect(
-                x: cardWidth - logoTextSize.width - 40,
-                y: cardY + cardHeight / 2 - logoTextSize.height / 2,
-                width: logoTextSize.width,
-                height: logoTextSize.height
-            )
-
-            // Draw a subtle accent behind the logo
-            context.saveGState()
-            context.setShadow(offset: .zero, blur: 15, color: routeColor.withAlphaComponent(0.6).cgColor)
-            (logoText as NSString).draw(in: logoTextRect, withAttributes: logoAttributes)
-            context.restoreGState()
-
-            // Get the final image
+            // Get the final image with just the map and route
             if let finalImage = UIGraphicsGetImageFromCurrentImageContext() {
                 completion(finalImage)
             } else {
@@ -298,9 +186,31 @@ class MapSnapshotGenerator {
             }
         }
     }
+    
+    /// Generate a stylish snapshot of a route with the standard overlay
+    /// - Parameters:
+    ///   - route: The route information
+    ///   - mapType: The type of map to display
+    ///   - completion: Callback with the generated image
+    static func generateRouteSnapshot(
+        route: RouteInfo,
+        mapType: MKMapType,
+        completion: @escaping (UIImage?) -> Void
+    ) {
+        // First get a clean snapshot with just the map
+        generateCleanRouteSnapshot(route: route, mapType: mapType) { mapImage in
+            guard let mapImage else {
+                completion(nil)
+                return
+            }
+            
+            // Now we'll pass this clean map image to create templates
+            completion(mapImage)
+        }
+    }
 
     /// Returns the UIColor for a route type
-    private static func uiColor(for type: HKWorkoutActivityType) -> UIColor {
+    static func uiColor(for type: HKWorkoutActivityType) -> UIColor {
         switch type {
         case .walking: UIColor(red: 0.0, green: 0.7, blue: 1.0, alpha: 1.0) // Vibrant blue
         case .running: UIColor(red: 1.0, green: 0.4, blue: 0.4, alpha: 1.0) // Vibrant red
@@ -310,7 +220,7 @@ class MapSnapshotGenerator {
     }
 
     /// Returns the display name for a route type
-    private static func routeTypeName(for type: HKWorkoutActivityType) -> String {
+    static func routeTypeName(for type: HKWorkoutActivityType) -> String {
         switch type {
         case .walking: "Walking Route"
         case .running: "Running Route"
@@ -320,7 +230,7 @@ class MapSnapshotGenerator {
     }
 
     /// Calculate distance in miles for a route
-    private static func calculateDistanceInMiles(for route: RouteInfo) -> Double {
+    static func calculateDistanceInMiles(for route: RouteInfo) -> Double {
         guard route.locations.count > 1 else {
             return 0.0
         }

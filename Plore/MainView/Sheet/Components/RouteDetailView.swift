@@ -11,6 +11,18 @@ import MapKit
 import SwiftUI
 
 /// A detailed view for a single route with full-screen map and statistics
+import Foundation
+import HealthKit
+import MapKit
+import SwiftUI
+
+/// A detailed view for a single route with full-screen map and statistics
+import Foundation
+import HealthKit
+import MapKit
+import SwiftUI
+
+/// A detailed view for a single route with full-screen map and statistics
 struct RouteDetailView: View {
     // MARK: - Properties
 
@@ -22,8 +34,8 @@ struct RouteDetailView: View {
     @State private var mapStyle: MapStyle = .standard
     @State private var isStandardMap: Bool = true
 
-    @State private var isShareSheetPresented = false
-    @State private var shareImage: UIImage?
+    @State private var isShareViewPresented = false
+    @State private var routeSnapshot: UIImage?
     @State private var isGeneratingSnapshot = false
 
     // MARK: - Initialization
@@ -94,9 +106,9 @@ struct RouteDetailView: View {
         }
         .edgesIgnoringSafeArea(.all)
         .navigationBarHidden(true) // This hides the navigation bar completely
-        .sheet(isPresented: $isShareSheetPresented) {
-            if let image = shareImage {
-                ShareSheet(items: [image])
+        .fullScreenCover(isPresented: $isShareViewPresented) {
+            if let snapshot = routeSnapshot {
+                ShareRouteView(route: route, initialImage: snapshot)
             }
         }
         .overlay(
@@ -212,24 +224,6 @@ struct RouteDetailView: View {
                         icon: "arrow.left.and.right",
                         color: routeTypeColor(for: route.type)
                     )
-
-//                    // Duration
-//                    StatCard(
-//                        value: "25",
-//                        unit: "min",
-//                        label: "Duration",
-//                        icon: "clock",
-//                        color: routeTypeColor(for: route.type)
-//                    )
-//
-//                    // Pace
-//                    StatCard(
-//                        value: "10:30",
-//                        unit: "mi/min",
-//                        label: "Pace",
-//                        icon: "speedometer",
-//                        color: routeTypeColor(for: route.type)
-//                    )
                 }
 
                 // Elevation profile placeholder
@@ -268,28 +262,26 @@ struct RouteDetailView: View {
                 }
                 .padding(.top, 8)
 
-                // Share button - Updated with functionality
+                // Enhanced Share button - Updated with new design and functionality
                 Button {
                     shareRoute()
                 } label: {
                     HStack {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
 
-                        Text("Share Route")
+                        Text("Customize & Share")
                             .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(routeTypeColor(for: route.type).opacity(0.1))
+                            .fill(routeTypeColor(for: route.type))
                     )
-                    .foregroundColor(routeTypeColor(for: route.type))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(routeTypeColor(for: route.type).opacity(0.3), lineWidth: 1)
-                    )
+                    .shadow(color: routeTypeColor(for: route.type).opacity(0.4), radius: 5, x: 0, y: 2)
                 }
                 .padding(.top, 10)
                 .disabled(isGeneratingSnapshot) // Disable while generating snapshot
@@ -376,7 +368,7 @@ struct RouteDetailView: View {
         return String(format: "%.1f", distanceInMiles)
     }
 
-    /// Share the route with a custom map image
+    /// Prepare route for sharing
     private func shareRoute() {
         // Show loading indicator
         isGeneratingSnapshot = true
@@ -384,15 +376,16 @@ struct RouteDetailView: View {
         // Generate map snapshot
         let mapType: MKMapType = isStandardMap ? .standard : .hybrid
 
-        MapSnapshotGenerator.generateRouteSnapshot(route: route, mapType: mapType) { image in
+        // Use the clean snapshot generator to get just the map without overlays
+        MapSnapshotGenerator.generateCleanRouteSnapshot(route: route, mapType: mapType) { image in
             // Hide loading indicator
             DispatchQueue.main.async {
                 isGeneratingSnapshot = false
 
                 if let image {
                     // Set the share image and present share sheet
-                    shareImage = image
-                    isShareSheetPresented = true
+                    routeSnapshot = image
+                    isShareViewPresented = true
                 }
             }
         }
