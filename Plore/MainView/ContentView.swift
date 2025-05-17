@@ -21,7 +21,7 @@ struct ContentView: View {
         get { RouteColorTheme(rawValue: routeColorThemeRaw) ?? .vibrant }
         set { routeColorThemeRaw = newValue.rawValue }
     }
-    
+
     private var routeColorThemeBinding: Binding<RouteColorTheme> {
         Binding<RouteColorTheme>(
             get: { RouteColorTheme(rawValue: routeColorThemeRaw) ?? .vibrant },
@@ -340,6 +340,7 @@ struct ContentView: View {
                 }
             }
         }
+        .mapControls {}
         .edgesIgnoringSafeArea(.all)
     }
 
@@ -574,11 +575,14 @@ struct ContentView: View {
         await healthKitManager.loadRoutes()
 
         // Determine the most recent route and set map position
-        let allRoutes = healthKitManager.walkingRouteInfos + healthKitManager.runningRouteInfos + healthKitManager.cyclingRouteInfos
+        let allRoutes = healthKitManager.walkingRouteInfos + healthKitManager.runningRouteInfos + healthKitManager
+            .cyclingRouteInfos
         if let mostRecentRoute = allRoutes.sorted(by: { $0.date > $1.date }).first {
             let routeRect = mostRecentRoute.polyline.boundingMapRect
-            let oneMileInMapPoints = 1609.34 * MKMapPointsPerMeterAtLatitude(mostRecentRoute.polyline.coordinate.latitude) // Approximate
-            let expandedRect = routeRect.insetBy(dx: -oneMileInMapPoints, dy: -oneMileInMapPoints) // Negative inset expands
+            let oneMileInMapPoints = 1609.34 *
+                MKMapPointsPerMeterAtLatitude(mostRecentRoute.polyline.coordinate.latitude) // Approximate
+            let expandedRect = routeRect
+                .insetBy(dx: -oneMileInMapPoints, dy: -oneMileInMapPoints) // Negative inset expands
             mapPosition = .rect(expandedRect)
         } else {
             mapPosition = .automatic

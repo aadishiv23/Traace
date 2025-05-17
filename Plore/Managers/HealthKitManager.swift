@@ -102,10 +102,10 @@ class HealthKitManager: ObservableObject {
 
         let now = Date()
 
-        guard now.timeIntervalSince(lastSync) > interval else {
-            print("[HealthKitManager] syncDate() - Skipping sync as less than one hour has passed since last sync")
-            return
-        }
+//        guard now.timeIntervalSince(lastSync) > interval else {
+//            print("[HealthKitManager] syncDate() - Skipping sync as less than one hour has passed since last sync")
+//            return
+//        }
 
         Task {
             let bgContext = coreDataManager.persistenceContainer.newBackgroundContext()
