@@ -40,7 +40,7 @@ struct MinimalSearchBarView: View {
             if isInteractive {
                 TextField("Search routes", text: $searchText)
                     .autocorrectionDisabled()
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 6)
                     .onTapGesture {
                         isSearchFocused = true
                     }
@@ -70,7 +70,7 @@ struct MinimalSearchBarView: View {
                 .animation(.easeInOut(duration: 0.2), value: !searchText.isEmpty)
             }
         }
-        .padding(6) // Increased overall padding for a more comfortable tap target
+        .padding(10) // Increased overall padding for a more comfortable tap target
         .background(
             // Neutral background with consistent shadow
             RoundedRectangle(cornerRadius: 16)
@@ -101,24 +101,68 @@ struct MinimalSearchBarView: View {
 
 // MARK: - Preview
 
-#Preview {
-    struct MinimalSearchBarPreview: View {
-        @State private var searchText: String = ""
-        @State private var selectedDate: Date? = nil
-        @State private var isInteractive: Bool = true
+// MARK: - Previews
+#Preview("Light Mode - Typing") {
+    MinimalSearchBarPreview(
+        searchText: "Running",
+        selectedDate: nil,
+        isInteractive: true
+    )
+    .preferredColorScheme(.light)
+}
 
-        var body: some View {
-            MinimalSearchBarView(
-                searchText: $searchText,
-                selectedDate: $selectedDate,
-                isInteractive: $isInteractive,
-                onFilterChanged: {
-                    print("Filter changed: \(searchText), \(String(describing: selectedDate))")
-                }
-            )
-            .padding()
-            .background(Color(.systemBackground))
-        }
+#Preview("Light Mode - Empty") {
+    MinimalSearchBarPreview(
+        searchText: "",
+        selectedDate: nil,
+        isInteractive: true
+    )
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode - Typing") {
+    MinimalSearchBarPreview(
+        searchText: "Swimming",
+        selectedDate: nil,
+        isInteractive: true
+    )
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Dark Mode - Empty") {
+    MinimalSearchBarPreview(
+        searchText: "",
+        selectedDate: nil,
+        isInteractive: true
+    )
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Dark Mode - Non-Interactive") {
+    MinimalSearchBarPreview(
+        searchText: "Cycling",
+        selectedDate: nil,
+        isInteractive: false
+    )
+    .preferredColorScheme(.dark)
+}
+
+// Extracted view for reuse in previews
+private struct MinimalSearchBarPreview: View {
+    @State var searchText: String
+    @State var selectedDate: Date?
+    @State var isInteractive: Bool
+
+    var body: some View {
+        MinimalSearchBarView(
+            searchText: $searchText,
+            selectedDate: $selectedDate,
+            isInteractive: $isInteractive,
+            onFilterChanged: {
+                print("Filter changed: \(searchText), \(String(describing: selectedDate))")
+            }
+        )
+        .padding()
+        .background(Color(.systemBackground))
     }
-    return MinimalSearchBarPreview()
 }
