@@ -25,13 +25,13 @@ final class SheetViewModel: ObservableObject {
     @Published var selectedRoute: RouteInfo? = nil
 
     /// Bindings that toggle whether walking routes should be shown.
-    @Published var showWalkingRoutes: Bool
+    @Published var showWalkingRoutes: Bool = true
 
     /// Bindings that toggle whether running routes should be shown.
-    @Published var showRunningRoutes: Bool
+    @Published var showRunningRoutes: Bool = true
 
     /// Bindings that toggle whether cycling routes should be shown.
-    @Published var showCyclingRoutes: Bool
+    @Published var showCyclingRoutes: Bool = true
 
     // MARK: - Routing/UI State
 
@@ -49,6 +49,8 @@ final class SheetViewModel: ObservableObject {
 
     /// Shows first-time user tips section.
     @Published var showFirstTimeTips: Bool = false
+
+    @AppStorage("hasSeenOnboarding") var hasCompletedOnboarding: Bool = false
 
     // MARK: - Sync/Progress State
 
@@ -82,7 +84,7 @@ final class SheetViewModel: ObservableObject {
 
     // MARK: - Combine
 
-    @Published var cancellables = Set<AnyPublisher>()
+    var cancellables = Set<AnyCancellable>()
 
     init(healthKitManager: HealthKitManager) {
         self.healthKitManager = healthKitManager
@@ -109,7 +111,15 @@ final class SheetViewModel: ObservableObject {
 
         // Sync loading state for showing progress
         healthKitManager.$isLoadingRoutes
-            .assign(to: $showLoadingProgress)
+            .sink { [weak self] isLoading in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    self?.showLoadingProgress = isLoading
+                }
+                if !isLoading {
+                    self?.loadingRotation = 0
+                }
+            }
+            .store(in: &cancellables)
 
         // Reload on HealthKit route changes
         healthKitManager.$runningRouteInfos
