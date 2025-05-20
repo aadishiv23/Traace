@@ -22,62 +22,10 @@ import SwiftUI
 struct SheetView: View {
     // MARK: - Properties
 
+    @ObservedObject var viewModel: SheetViewModel
+
     @Environment(\.routeColorTheme) private var routeColorTheme
 
-    /// Track the user's selected time interval.
-    @State private var selectedSyncInterval: TimeInterval = 3600
-
-    /// The search text.
-    @State private var searchText: String = ""
-
-    /// Indicates if sync is in progress
-    @State private var isSyncing = false
-
-    /// Last sync time
-    @State private var lastSyncTime: Date? = nil
-
-    /// The date selected to be filtered by.
-    @State private var selectedDate: Date? = nil
-
-    /// The currently selected route for focusing on the map
-    @State private var selectedRoute: RouteInfo? = nil
-
-    /// Control for route detail sheet
-    @State private var showRouteDetailSheet = false
-
-    /// Controls whether map preview is shown in route cards
-    @State private var showPreview: Bool = false
-
-    /// Whether the search is active/interactive.
-    @State private var isSearchActive = false
-
-    /// Show first-time user tips
-    @State private var showFirstTimeTips = false
-
-    /// Whether to show the loading bar in the sheet.
-    @State private var showLoadingProgress: Bool = false
-
-    // Whether the Settings panel is showing.
-    // @State private var isShowingSettingsPanel = false
-
-    /// The object that interfaces with HealthKit to fetch route data.
-    @ObservedObject var healthKitManager: HealthKitManager
-
-    /// Bindings that toggle whether walking routes should be shown.
-    @Binding var showWalkingRoutes: Bool
-
-    /// Bindings that toggle whether running routes should be shown.
-    @Binding var showRunningRoutes: Bool
-
-    /// Bindings that toggle whether cycling routes should be shown.
-    @Binding var showCyclingRoutes: Bool
-
-    @Binding var selectedFilterDate: Date?
-
-    @Binding var focusedRoute: RouteInfo?
-
-    /// Binding to hasCompletedOnboarding from ContentView
-    @Binding var hasCompletedOnboarding: Bool
 
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
@@ -87,13 +35,6 @@ struct SheetView: View {
     let onRouteSelected: (RouteInfo) -> Void
     let onDateFilterChanged: (() -> Void)?
 
-    @State private var filteredRoutes: [RouteInfo] = []
-    @State private var isEditingRouteName: UUID? = nil
-    @State private var editingName: String = ""
-
-    @State private var loadingRotation: Double = 0
-
-    @AppStorage("hasSeenTips") private var hasSeenTips: Bool = false
 
     // MARK: - Body
 
@@ -106,46 +47,26 @@ struct SheetView: View {
 
             // MARK: Loading progress bar + counter
 
-
             // Main tab content
             tabContentSection
         }
-        .sheet(isPresented: $showRouteDetailSheet) {
-            if let route = selectedRoute {
+        .sheet(isPresented: $viewModel.showRouteDetailSheet) {
+            if let route = viewModel.selectedRoute {
                 RouteDetailView(route: route)
             }
         }
         .onAppear {
-            updateFilteredRoutes()
-            performSync()
-            if hasCompletedOnboarding, !hasSeenTips {
+            viewModel.updateFilteredRoutes()
+            viewModel.performSync()
+            if viewModel.hasCompletedOnboarding, !viewModel.hasSeenTips {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showFirstTimeTips = true
-                    hasSeenTips = true
+                    viewModel.showFirstTimeTips = true
+                    viewModel.hasSeenTips = true
                 }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                updateFilteredRoutes()
+                viewModel.updateFilteredRoutes()
             }
-        }
-        // Listen to loading state so we can show/hide the bar.
-        // In SheetView body's modifiers:
-        .onReceive(healthKitManager.$isLoadingRoutes) { isLoading in
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showLoadingProgress = isLoading // Or rename this state if you prefer
-            }
-            if !isLoading {
-                loadingRotation = 0
-            }
-        }
-        .onReceive(healthKitManager.$walkingRouteInfos) { _ in
-            updateFilteredRoutes()
-        }
-        .onReceive(healthKitManager.$runningRouteInfos) { _ in
-            updateFilteredRoutes()
-        }
-        .onReceive(healthKitManager.$cyclingRouteInfos) { _ in
-            updateFilteredRoutes()
         }
     }
 
@@ -156,16 +77,16 @@ struct SheetView: View {
         HStack {
             // Search bar that stays in place
             MinimalSearchBarView(
-                searchText: $searchText,
-                selectedDate: $selectedDate,
-                isInteractive: $isSearchActive,
+                searchText: $viewModel.searchText,
+                selectedDate: $viewModel.selectedDate,
+                isInteractive: $viewModel.isSearchActive,
                 onFilterChanged: {
-                    updateFilteredRoutes()
+                    viewModel.updateFilteredRoutes()
                 }
             )
             .onTapGesture {
-                if !isSearchActive {
-                    isSearchActive = true
+                if !viewModel.isSearchActive {
+                    viewModel.isSearchActive = true
                 }
             }
         }
@@ -193,7 +114,7 @@ struct SheetView: View {
                 syncStatusSection
 
                 // First-time tips (conditionally shown)
-                if showFirstTimeTips, filteredRoutes.isEmpty {
+                if viewModel.showFirstTimeTips, viewModel.filteredRoutes.isEmpty {
                     firstTimeTipsSection
                 }
 
@@ -223,9 +144,9 @@ struct SheetView: View {
 
                 Button {
                     withAnimation {
-                        showFirstTimeTips = false
+                        viewModel.showFirstTimeTips = false
                     }
-                    updateFilteredRoutes()
+                    viewModel.updateFilteredRoutes()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.gray)
@@ -276,35 +197,35 @@ struct SheetView: View {
                     .font(.headline)
                 Spacer()
 
-                if showLoadingProgress {
+                if viewModel.showLoadingProgress {
                     withAnimation {
                         HStack(spacing: 8) {
-                                 Circle()
-                                     .trim(from: 0, to: 0.7)
-                                     .stroke(Color.blue, lineWidth: 1.5) // Adjust color/linewidth as needed
-                                     .frame(width: 16, height: 16) // Smaller size
-                                     .rotationEffect(Angle(degrees: loadingRotation))
-                                     // Animation starts when the view appears in the loading state
-                                     .onAppear {
-                                         // Check ensures we don't restart animation unnecessarily if view redraws
-                                         if showLoadingProgress && loadingRotation == 0 {
-                                             withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)) {
-                                                 loadingRotation = 360
-                                             }
-                                         }
-                                     }
-                                     // Rotation is reset to 0 in the main .onReceive block
-
-                                 Text("Syncing \(healthKitManager.loadedRouteCount)/\(healthKitManager.totalRouteCount)...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .contentTransition(.numericText(countsDown: false)) // Animate count changes
-                                    .animation(.easeInOut, value: healthKitManager.loadedRouteCount)
-                             }
-                             .transition(.opacity.animation(.easeInOut(duration: 0.2))) // Smooth fade
+                            Circle()
+                                .trim(from: 0, to: 0.7)
+                                .stroke(Color.blue, lineWidth: 1.5)
+                                .frame(width: 16, height: 16)
+                                .rotationEffect(Angle(degrees: viewModel.loadingRotation))
+                                .onAppear {
+                                    if viewModel.showLoadingProgress, viewModel.loadingRotation == 0 {
+                                        withAnimation(
+                                            Animation.linear(duration: 1)
+                                                .repeatForever(autoreverses: false)
+                                        ) {
+                                            viewModel.loadingRotation = 360
+                                        }
+                                    }
+                                }
+                            Text(
+                                "Syncing \(viewModel.healthKitManager.loadedRouteCount)/\(viewModel.healthKitManager.totalRouteCount)..."
+                            )
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .contentTransition(.numericText(countsDown: false))
+                            .animation(.easeInOut, value: viewModel.healthKitManager.loadedRouteCount)
+                        }
+                        .transition(.opacity.animation(.easeInOut(duration: 0.2)))
                     }
                 } else {
-                    // Sync button
                     ClaudeButton(
                         "Sync",
                         color: .blue,
@@ -313,23 +234,23 @@ struct SheetView: View {
                         icon: Image(systemName: "arrow.triangle.2.circlepath"),
                         style: .modernAqua
                     ) {
-                        performSync()
+                        viewModel.performSync()
                     }
-                    .disabled(isSyncing)
-                    .opacity(isSyncing ? 0.7 : 1.0)
+                    .disabled(viewModel.isSyncing)
+                    .opacity(viewModel.isSyncing ? 0.7 : 1.0)
                 }
             }
 
             // Show focused route indicator or route counts
-            if focusedRoute != nil {
+            if viewModel.focusedRoute != nil {
                 focusedRouteIndicator
             } else {
                 routeCountsCards
             }
 
             // Last sync info
-            if let lastSync = lastSyncTime {
-                Text("Last synced: \(timeAgoString(from: lastSync))")
+            if let lastSync = viewModel.lastSyncTime {
+                Text("Last synced: \(viewModel.timeAgoString(from: lastSync))")
                     .font(.caption)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -340,14 +261,14 @@ struct SheetView: View {
     /// Focused route indicator when a specific route is selected.
     private var focusedRouteIndicator: some View {
         HStack {
-            Text("Showing \(focusedRoute?.name ?? "Selected Route") on map")
+            Text("Showing \(viewModel.focusedRoute?.name ?? "Selected Route") on map")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
             Spacer()
 
             Button {
-                focusedRoute = nil
+                viewModel.focusedRoute = nil
             } label: {
                 Text("Show All")
                     .font(.caption)
@@ -375,25 +296,25 @@ struct SheetView: View {
 
         return HStack(spacing: 20) {
             routeCountCard(
-                count: healthKitManager.runningRoutes.count,
+                count: viewModel.healthKitManager.runningRoutes.count,
                 title: "Running",
                 color: themeColors.running,
                 icon: "figure.run",
-                isOn: $showRunningRoutes
+                isOn: $viewModel.showRunningRoutes
             )
             routeCountCard(
-                count: healthKitManager.cyclingRoutes.count,
+                count: viewModel.healthKitManager.cyclingRoutes.count,
                 title: "Cycling",
                 color: themeColors.cycling,
                 icon: "figure.outdoor.cycle",
-                isOn: $showCyclingRoutes
+                isOn: $viewModel.showCyclingRoutes
             )
             routeCountCard(
-                count: healthKitManager.walkingRoutes.count,
+                count: viewModel.healthKitManager.walkingRoutes.count,
                 title: "Walking",
                 color: themeColors.walking,
                 icon: "figure.walk",
-                isOn: $showWalkingRoutes
+                isOn: $viewModel.showWalkingRoutes
             )
         }
     }
@@ -405,19 +326,19 @@ struct SheetView: View {
             // Streamlined, elegant toggle buttons
             routeToggleButton(
                 title: "Running",
-                isOn: $showRunningRoutes,
+                isOn: $viewModel.showRunningRoutes,
                 color: themeColors.running,
                 icon: "figure.run"
             )
             routeToggleButton(
                 title: "Cycling",
-                isOn: $showCyclingRoutes,
+                isOn: $viewModel.showCyclingRoutes,
                 color: themeColors.cycling,
                 icon: "figure.outdoor.cycle"
             )
             routeToggleButton(
                 title: "Walking",
-                isOn: $showWalkingRoutes,
+                isOn: $viewModel.showWalkingRoutes,
                 color: themeColors.walking,
                 icon: "figure.walk"
             )
@@ -435,32 +356,32 @@ struct SheetView: View {
 
                 Spacer()
 
-                Text("\(filteredRoutes.count) routes")
+                Text("\(viewModel.filteredRoutes.count) routes")
                     .foregroundColor(.secondary)
                     .font(.subheadline)
                     .contentTransition(.numericText(countsDown: false))
             }
 
             // Routes list or empty state
-            if filteredRoutes.isEmpty {
+            if viewModel.filteredRoutes.isEmpty {
                 emptyRoutesView
             } else {
                 LazyVStack(spacing: 16) {
-                    ForEach(filteredRoutes) { route in
+                    ForEach(viewModel.filteredRoutes) { route in
                         withAnimation(.easeInOut(duration: 0.2)) {
                             CollapsibleRouteRow(
                                 route: route,
-                                isEditing: isEditingRouteName == route.id,
-                                editingName: $editingName,
+                                isEditing: viewModel.isEditingRouteName == route.id,
+                                editingName: $viewModel.editingName,
                                 onEditComplete: {
-                                    if !editingName.isEmpty {
-                                        healthKitManager.updateRouteName(id: route.id, newName: editingName)
+                                    if !viewModel.editingName.isEmpty {
+                                        viewModel.healthKitManager.updateRouteName(id: route.id, newName: viewModel.editingName)
                                     }
-                                    isEditingRouteName = nil
+                                    viewModel.isEditingRouteName = nil
                                 },
                                 onEditStart: {
-                                    editingName = route.name ?? ""
-                                    isEditingRouteName = route.id
+                                    viewModel.editingName = route.name ?? ""
+                                    viewModel.isEditingRouteName = route.id
                                 },
                                 onRouteSelected: { selectedRoute in
                                     handleRouteSelection(selectedRoute)
@@ -474,10 +395,10 @@ struct SheetView: View {
             }
         }
         .onAppear {
-            updateFilteredRoutes()
+            viewModel.updateFilteredRoutes()
         }
-        .onChange(of: selectedFilterDate) { _, _ in
-            updateFilteredRoutes()
+        .onChange(of: viewModel.selectedDate) { _, _ in
+            viewModel.updateFilteredRoutes()
         }
     }
 
@@ -495,7 +416,7 @@ struct SheetView: View {
                 .font(.title3)
                 .fontWeight(.medium)
 
-            if selectedFilterDate != nil || !searchText.isEmpty {
+            if viewModel.selectedDate != nil || !viewModel.searchText.isEmpty {
                 Text("Try adjusting your search or filters")
                     .font(.body)
                     .foregroundColor(.secondary)
@@ -527,7 +448,7 @@ struct SheetView: View {
         Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 isOn.wrappedValue.toggle()
-                updateFilteredRoutes() // Update routes immediately
+                viewModel.updateFilteredRoutes() // Update routes immediately
             }
         } label: {
             VStack(spacing: 10) {
@@ -627,7 +548,7 @@ struct SheetView: View {
         Button {
             // Toggle with animation
             isOn.wrappedValue.toggle()
-            updateFilteredRoutes() // Update routes immediately
+            viewModel.updateFilteredRoutes() // Update routes immediately
         } label: {
             VStack(spacing: 6) {
                 // Icon with circle background
@@ -683,68 +604,14 @@ struct SheetView: View {
     /// - Parameter route: The route that was selected
     private func handleRouteSelection(_ route: RouteInfo) {
         // Option 1: Show route detail sheet if preview is showing
-        if showPreview {
-            selectedRoute = route
-            showRouteDetailSheet = true
+        if viewModel.showPreview {
+            viewModel.selectedRoute = route
+            viewModel.showRouteDetailSheet = true
         } else {
             // Option 2: Focus on the route in the main map
-            focusedRoute = route
+            viewModel.focusedRoute = route
             onRouteSelected(route)
         }
-    }
-
-    /// Perform synchronization with HealthKit
-    private func performSync() {
-        // Start the sync process
-        isSyncing = true
-        print("🔄 [SheetView] Starting manual sync...") // Add log
-
-        healthKitManager.syncData()
-
-        // Using Task to properly handle async operations
-        Task {
-            do {
-                // *** THE KEY CHANGE: Call syncData instead of loadRoutes ***
-
-                // The Task.sleep was likely just for simulation, can be removed
-                // try await Task.sleep(nanoseconds: 1_000_000_000)
-
-                // Use await MainActor.run for clarity and safety
-                await MainActor.run {
-                    // Update state
-                    lastSyncTime = Date() // Update last sync time display
-                    isSyncing = false
-                    print("✅ [SheetView] Manual sync complete. Refreshing filtered routes.") // Add log
-
-                    // Update filtered routes AFTER syncData has finished and potentially
-                    // updated the HealthKitManager's published properties
-                    updateFilteredRoutes()
-
-                    // Hide first-time tips after successful sync
-                    if showFirstTimeTips {
-                        withAnimation {
-                            showFirstTimeTips = false
-                        }
-                    }
-                }
-            } catch {
-                // Handle any errors from syncData
-                print("❌ [SheetView] Sync error: \(error)")
-                await MainActor.run {
-                    isSyncing = false
-                    // Optionally show an error alert to the user
-                }
-            }
-        }
-    }
-
-    /// Format a date as a relative time string (e.g., "2 hours ago")
-    /// - Parameter date: The date to format
-    /// - Returns: A string representing the relative time
-    private func timeAgoString(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     /// Returns the color associated with a route type
@@ -770,101 +637,5 @@ struct SheetView: View {
         }
     }
 
-    /// Updates the filtered routes based on selection criteria
-    ///
-    /// This method filters routes based on:
-    /// - Selected date
-    /// - Route type toggles (walking, running, cycling)
-    /// - Search text
-    private func updateFilteredRoutes() {
-        // Get all routes based on date filter
-        var routeInfos = healthKitManager.getAllRouteInfosByDate(date: selectedFilterDate)
-
-        // Apply activity type filters
-        routeInfos = routeInfos.filter { route in
-            switch route.type {
-            case .walking:
-                showWalkingRoutes
-            case .running:
-                showRunningRoutes
-            case .cycling:
-                showCyclingRoutes
-            default:
-                false
-            }
-        }
-
-        // Apply text search if needed
-        if !searchText.isEmpty {
-            routeInfos = routeInfos.filter { route in
-                let name = route.name ?? "Unknown Route"
-                return name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-
-        // Sort by date, newest first
-        routeInfos.sort { $0.date > $1.date }
-
-        filteredRoutes = routeInfos
-
-        // Update the filter on the ContentView
-        onDateFilterChanged?()
-    }
-}
-
-import SwiftUI
-
-/// A custom button style that scales the button slightly when pressed
-/// for a satisfying tactile feel.
-struct ScaleButtonStyle: ButtonStyle {
-    /// The amount to scale down when pressed (default is 0.96)
-    var scaleFactor: CGFloat = 0.96
-
-    /// The animation duration for the press effect (default is 0.2 seconds)
-    var duration: Double = 0.2
-
-    /// The animation damping for the press effect (default is 0.7)
-    var dampingFraction: Double = 0.7
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? scaleFactor : 1)
-            .animation(.spring(response: duration, dampingFraction: dampingFraction), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Usage Examples
-
-extension ScaleButtonStyle {
-    /// A subtle scale effect
-    static var subtle: ScaleButtonStyle {
-        ScaleButtonStyle(scaleFactor: 0.98, duration: 0.15, dampingFraction: 0.8)
-    }
-
-    /// A more pronounced scale effect
-    static var pronounced: ScaleButtonStyle {
-        ScaleButtonStyle(scaleFactor: 0.92, duration: 0.25, dampingFraction: 0.6)
-    }
-}
-
-// MARK: - View Extension
-
-extension View {
-    /// Apply the scale button style with custom parameters
-    /// - Parameters:
-    ///   - scaleFactor: The amount to scale down when pressed
-    ///   - duration: The animation duration for the press effect
-    ///   - dampingFraction: The animation damping for the press effect
-    /// - Returns: A view with the scale button style applied
-    func scaleButtonStyle(
-        scaleFactor: CGFloat = 0.96,
-        duration: Double = 0.2,
-        dampingFraction: Double = 0.7
-    ) -> some View {
-        buttonStyle(ScaleButtonStyle(
-            scaleFactor: scaleFactor,
-            duration: duration,
-            dampingFraction: dampingFraction
-        ))
-    }
+    // Filtering handled in ViewModel, so updateFilteredRoutes is not needed here.
 }

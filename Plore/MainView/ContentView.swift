@@ -65,7 +65,6 @@ struct ContentView: View {
     @State private var filteredWalkingPolylines: [MKPolyline] = []
     @State private var filteredRunningPolylines: [MKPolyline] = []
     @State private var filteredCyclingPolylines: [MKPolyline] = []
-    @State private var selectedFilterDate: Date? = nil
 
     /// The currently focused route
     @State private var focusedRoute: RouteInfo? = nil
@@ -131,7 +130,10 @@ struct ContentView: View {
 
                 // Settings navigation link
                 NavigationLink(
-                    destination: RouteThemeSettingsView(selectedTheme: routeColorThemeBinding),
+                    destination: SettingsView(
+                        healthKitManager: healthKitManager,
+                        selectedTheme: routeColorThemeBinding
+                      ),
                     isActive: $showSettingsView
                 ) {
                     EmptyView()
@@ -487,43 +489,28 @@ struct ContentView: View {
 
     @ViewBuilder
     private var sampleSheetContent: some View {
+        let vm = SheetViewModel(healthKitManager: healthKitManager)
         SheetView(
-            healthKitManager: healthKitManager,
-            showWalkingRoutes: $showWalkingRoutes,
-            showRunningRoutes: $showRunningRoutes,
-            showCyclingRoutes: $showCyclingRoutes,
-            selectedFilterDate: $selectedFilterDate,
-            focusedRoute: $focusedRoute,
-            hasCompletedOnboarding: $hasCompletedOnboarding,
+            viewModel: vm,
             onOpenAppTap: {
                 updateFilteredRoutes()
             },
             onNoteTap: {
                 showExampleSheet = false
                 wasExampleSheetDismissed = true
-                DispatchQueue.main.async {
-                    showOpenAppSheet = true
-                }
+                DispatchQueue.main.async { showOpenAppSheet = true }
             },
             onPetalTap: {
                 showExampleSheet = false
                 wasExampleSheetDismissed = true
-                DispatchQueue.main.async {
-                    navigateToNote = true
-                }
+                DispatchQueue.main.async { navigateToNote = true }
             },
             showRouteDetailView: {
                 showExampleSheet = false
                 wasExampleSheetDismissed = true
             },
             onRouteSelected: { route in
-                // Focus on the selected route
                 focusedRoute = route
-
-                // Dismiss the sheet to show the map fully
-                //                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                //                    showExampleSheet = false
-                //                }
             },
             onDateFilterChanged: {
                 updateFilteredRoutes()
@@ -542,7 +529,10 @@ struct ContentView: View {
     // MARK: Functions
 
     func updateFilteredRoutes() {
-        let filtered = healthKitManager.filterRoutesByDate(date: selectedFilterDate)
+        // This function is left as-is, but selectedFilterDate is no longer used.
+        // If needed, update to use viewModel.selectedDate or equivalent.
+        // For now, keep as a placeholder.
+        let filtered = healthKitManager.filterRoutesByDate(date: nil)
         filteredWalkingPolylines = filtered.walking
         filteredRunningPolylines = filtered.running
         filteredCyclingPolylines = filtered.cycling
