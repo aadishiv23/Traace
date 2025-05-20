@@ -30,6 +30,7 @@ struct RouteDetailView: View {
     let route: RouteInfo
 
     @Environment(\.routeColorTheme) private var routeColorTheme
+    @AppStorage("polylineStyle") private var polylineStyle: PolylineStyle = .standard
     @Environment(\.dismiss) private var dismiss
     @State private var mapPosition: MapCameraPosition
     @State private var mapStyle: MapStyle = .standard
@@ -92,9 +93,26 @@ struct RouteDetailView: View {
     /// Full-screen map view with the route and annotations.
     private var mapView: some View {
         Map(position: $mapPosition, interactionModes: .all) {
-            // Route polyline
-            MapPolyline(route.polyline)
-                .stroke(routeTypeColor(for: route.type), lineWidth: 6)
+            if polylineStyle == .custom {
+                // Casing for the route polyline
+                MapPolyline(route.polyline)
+                    .stroke(Color.black.opacity(0.4), lineWidth: 9) // Casing layer, slightly thicker than main line
+
+                // Route polyline
+                MapPolyline(route.polyline)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [routeTypeColor(for: route.type).opacity(0.8), routeTypeColor(for: route.type)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        lineWidth: 7 // Main line
+                    )
+            } else {
+                // Standard route polyline
+                MapPolyline(route.polyline)
+                    .stroke(routeTypeColor(for: route.type), lineWidth: 6)
+            }
 
             // Start marker
             if let firstLocation = route.locations.first {

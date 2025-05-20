@@ -16,6 +16,7 @@ struct ContentView: View {
 
     /// Route color theme in use (persisted)
     @AppStorage("routeColorTheme") private var routeColorThemeRaw: String = RouteColorTheme.vibrant.rawValue
+    @AppStorage("polylineStyle") private var polylineStyle: PolylineStyle = .standard
 
     private var routeColorTheme: RouteColorTheme {
         get { RouteColorTheme(rawValue: routeColorThemeRaw) ?? .vibrant }
@@ -73,6 +74,9 @@ struct ContentView: View {
     @State private var showRouteDetailView = false
 
     @State private var routeDetailDismissed = false
+
+    /// Controls when the StatsView sheet is shown.
+    @State private var showStatsView = false
 
     /// MapCamera position state
     @State private var mapPosition: MapCameraPosition = .automatic
@@ -133,7 +137,12 @@ struct ContentView: View {
                     destination: SettingsView(
                         healthKitManager: healthKitManager,
                         selectedTheme: routeColorThemeBinding
-                      ),
+                      ).onDisappear {
+                          DispatchQueue.main.async {
+                              showExampleSheet = true
+                          }
+                      }
+                    ,
                     isActive: $showSettingsView
                 ) {
                     EmptyView()
@@ -147,6 +156,18 @@ struct ContentView: View {
             // Primary sheet – SampleView.
             .sheet(isPresented: $showExampleSheet) {
                 sampleSheetContent
+            }
+            // Stats View Sheet
+            .sheet(isPresented: $showStatsView, onDismiss: {
+                showExampleSheet = true
+            }) {
+                StatsView(healthKitManager: healthKitManager)
+                    .environment(\.routeColorTheme, routeColorTheme)
+//                    .onDisappear {
+//                        DispatchQueue.main.async {
+//                            showExampleSheet = true
+//                        }
+//                    }
             }
             // Inject the route color theme into the environment for all child views
             .environment(\.routeColorTheme, routeColorTheme)
@@ -288,8 +309,24 @@ struct ContentView: View {
         Map(position: $mapPosition) {
             // If there's a focused route, show only that one
             if let route = focusedRoute {
-                MapPolyline(route.polyline)
-                    .stroke(routeTypeColor(for: route.type), lineWidth: 4)
+                if polylineStyle == .custom {
+                    // Casing for the focused route
+                    MapPolyline(route.polyline)
+                        .stroke(Color.black.opacity(0.4), lineWidth: 7) // Casing layer
+
+                    MapPolyline(route.polyline)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [routeTypeColor(for: route.type).opacity(0.8), routeTypeColor(for: route.type)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            lineWidth: 5 // Main line
+                        )
+                } else {
+                    MapPolyline(route.polyline)
+                        .stroke(routeTypeColor(for: route.type), lineWidth: 4)
+                }
 
                 // Start marker
                 if let firstLocation = route.locations.first {
@@ -325,19 +362,72 @@ struct ContentView: View {
             }
             // Otherwise show all filtered routes
             else {
+                let visibleRouteCount = (showWalkingRoutes ? filteredWalkingPolylines.count : 0) +
+                                        (showRunningRoutes ? filteredRunningPolylines.count : 0) +
+                                        (showCyclingRoutes ? filteredCyclingPolylines.count : 0)
+                let useEnhancedStyle = polylineStyle == .custom && visibleRouteCount < 15 // Threshold for enhanced style
+
                 if showWalkingRoutes {
-                    ForEach(filteredWalkingPolylines, id: \.self) {
-                        MapPolyline($0).stroke(currentRouteColors.walking, lineWidth: 3)
+                    ForEach(filteredWalkingPolylines, id: \.self) { polyline in
+                        if useEnhancedStyle {
+                            // Casing for walking routes
+                            MapPolyline(polyline)
+                                .stroke(Color.black.opacity(0.4), lineWidth: 6) // Casing layer
+
+                            MapPolyline(polyline)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [currentRouteColors.walking.opacity(0.8), currentRouteColors.walking]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 4 // Main line
+                                )
+                        } else {
+                            MapPolyline(polyline).stroke(currentRouteColors.walking, lineWidth: 3)
+                        }
                     }
                 }
                 if showRunningRoutes {
-                    ForEach(filteredRunningPolylines, id: \.self) {
-                        MapPolyline($0).stroke(currentRouteColors.running, lineWidth: 3)
+                    ForEach(filteredRunningPolylines, id: \.self) { polyline in
+                        if useEnhancedStyle {
+                            // Casing for running routes
+                            MapPolyline(polyline)
+                                .stroke(Color.black.opacity(0.4), lineWidth: 6) // Casing layer
+
+                            MapPolyline(polyline)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [currentRouteColors.running.opacity(0.8), currentRouteColors.running]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 4 // Main line
+                                )
+                        } else {
+                            MapPolyline(polyline).stroke(currentRouteColors.running, lineWidth: 3)
+                        }
                     }
                 }
                 if showCyclingRoutes {
-                    ForEach(filteredCyclingPolylines, id: \.self) {
-                        MapPolyline($0).stroke(currentRouteColors.cycling, lineWidth: 3)
+                    ForEach(filteredCyclingPolylines, id: \.self) { polyline in
+                        if useEnhancedStyle {
+                            // Casing for cycling routes
+                            MapPolyline(polyline)
+                                .stroke(Color.black.opacity(0.4), lineWidth: 6) // Casing layer
+                            
+                            MapPolyline(polyline)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [currentRouteColors.cycling.opacity(0.8), currentRouteColors.cycling]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 4 // Main line
+                                )
+                        } else {
+                            MapPolyline(polyline).stroke(currentRouteColors.cycling, lineWidth: 3)
+                        }
                     }
                 }
             }
@@ -405,7 +495,6 @@ struct ContentView: View {
     }
 
     /// Control button overlay.
-    /// Control button overlay.
     private var controlButtons: some View {
         VStack {
             Spacer()
@@ -451,10 +540,36 @@ struct ContentView: View {
 
                     Spacer()
                 }
+                
+                HStack {
+                    Button {
+                        showExampleSheet = false
+                        showStatsView = true
+                    } label: {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.system(size: 22, weight: .semibold))
+                            .frame(width: 50, height: 50)
+                            .foregroundColor(.primary)
+                    }
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                    .padding(.leading, 10)
+                    
+                    
+                    Spacer()
+                }
             }
             // Push the whole stack up a bit from the bottom
             .padding(.bottom, 400)
         }
+    }
+
+    // Helper to get bottom safe area inset
+    private var safeAreaInsetsBottom: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first?.safeAreaInsets.bottom ?? 0
     }
 
     @ViewBuilder
