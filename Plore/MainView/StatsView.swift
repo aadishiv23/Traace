@@ -410,22 +410,28 @@ struct TimeBasedActivityChart: View {
     private var weeklyData: [TimeframeData] {
         // Get current calendar week number
         let calendar = Calendar.current
-        let currentWeek = calendar.component(.weekOfYear, from: Date())
-        
+        let currentDate = Date()
+        let currentWeek = calendar.component(.weekOfYear, from: currentDate)
+        let currentYear = calendar.component(.year, from: currentDate)
+        let yearFormatter = DateFormatter()
+        yearFormatter.dateFormat = "yy"
+
         // Create data for last 4 weeks
         var data: [TimeframeData] = []
-        
-        for weekOffset in 0..<4 {
-            let weekNumber = ((currentWeek - weekOffset) + 52) % 52 // Handle year boundary
-            let weekLabel = "W\(weekNumber)"
+
+        for weekOffset in 0..<12 {
+            guard let weekStartDate = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: currentDate),
+                  let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekStartDate)) else {
+                continue
+            }
+            let weekNumber = calendar.component(.weekOfYear, from: weekStart)
+            let yearForWeek = calendar.component(.yearForWeekOfYear, from: weekStart)
+            let weekLabel = "W\(weekNumber) '\(yearFormatter.string(from: weekStart))"
             
-            // Filter routes for this week
-            let weeksAgo = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: Date()) ?? Date()
-            let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weeksAgo)) ?? Date()
-            let weekEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart) ?? Date()
-            
-            let weekRoutes = routeInfos.filter { 
-                $0.date >= weekStart && $0.date < weekEnd 
+            let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) ?? Date()
+
+            let weekRoutes = routeInfos.filter {
+                $0.date >= weekStart && $0.date < weekEnd
             }
             
             // Calculate distances
@@ -457,26 +463,32 @@ struct TimeBasedActivityChart: View {
     
     private var monthlyData: [TimeframeData] {
         let calendar = Calendar.current
-        let currentMonth = calendar.component(.month, from: Date())
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM"
+        let currentDate = Date()
+        let currentMonth = calendar.component(.month, from: currentDate)
+        let currentYear = calendar.component(.year, from: currentDate)
         
+        let monthFormatter = DateFormatter()
+        monthFormatter.dateFormat = "MMM"
+        let yearFormatter = DateFormatter()
+        yearFormatter.dateFormat = "yy"
+
         var data: [TimeframeData] = []
-        
-        for monthOffset in 0..<4 {
-            let monthNumber = ((currentMonth - monthOffset - 1) + 12) % 12 + 1
-            let date = calendar.date(from: DateComponents(month: monthNumber)) ?? Date()
-            let monthLabel = formatter.string(from: date)
+
+        for monthOffset in 0..<12 {
+            guard let targetDate = calendar.date(byAdding: .month, value: -monthOffset, to: currentDate),
+                  let monthStartDate = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate)) else {
+                continue
+            }
             
-            // Filter routes for this month
-            let monthsAgo = calendar.date(byAdding: .month, value: -monthOffset, to: Date()) ?? Date()
-            let month = calendar.component(.month, from: monthsAgo)
-            let year = calendar.component(.year, from: monthsAgo)
+            let monthLabel = "\(monthFormatter.string(from: monthStartDate)) '\(yearFormatter.string(from: monthStartDate))"
             
+            let monthComponent = calendar.component(.month, from: monthStartDate)
+            let yearComponent = calendar.component(.year, from: monthStartDate)
+
             let monthRoutes = routeInfos.filter {
                 let routeMonth = calendar.component(.month, from: $0.date)
                 let routeYear = calendar.component(.year, from: $0.date)
-                return routeMonth == month && routeYear == year
+                return routeMonth == monthComponent && routeYear == yearComponent
             }
             
             // Calculate distances
@@ -530,53 +542,57 @@ struct TimeBasedActivityChart: View {
             )
             .padding()
         } else {
-            Chart {
-                ForEach(chartData) { dataPoint in
-                    BarMark(
-                        x: .value("Time", dataPoint.label),
-                        y: .value("Walking", animateChart ? dataPoint.walking / 1609.34 : 0),
-                        width: .ratio(0.6)
-                    )
-                    .foregroundStyle(colors.walking.gradient)
-                    .position(by: .value("Activity", "Walking"))
-                    
-                    BarMark(
-                        x: .value("Time", dataPoint.label),
-                        y: .value("Running", animateChart ? dataPoint.running / 1609.34 : 0),
-                        width: .ratio(0.6)
-                    )
-                    .foregroundStyle(colors.running.gradient)
-                    .position(by: .value("Activity", "Running"))
-                    
-                    BarMark(
-                        x: .value("Time", dataPoint.label),
-                        y: .value("Cycling", animateChart ? dataPoint.cycling / 1609.34 : 0),
-                        width: .ratio(0.6)
-                    )
-                    .foregroundStyle(colors.cycling.gradient)
-                    .position(by: .value("Activity", "Cycling"))
+            ScrollView(.horizontal, showsIndicators: false) {
+                Chart {
+                    ForEach(chartData) { dataPoint in
+                        BarMark(
+                            x: .value("Time", dataPoint.label),
+                            y: .value("Walking", animateChart ? dataPoint.walking / 1609.34 : 0),
+                            width: .ratio(0.6)
+                        )
+                        .foregroundStyle(colors.walking.gradient)
+                        .position(by: .value("Activity", "Walking"))
+                        
+                        BarMark(
+                            x: .value("Time", dataPoint.label),
+                            y: .value("Running", animateChart ? dataPoint.running / 1609.34 : 0),
+                            width: .ratio(0.6)
+                        )
+                        .foregroundStyle(colors.running.gradient)
+                        .position(by: .value("Activity", "Running"))
+                        
+                        BarMark(
+                            x: .value("Time", dataPoint.label),
+                            y: .value("Cycling", animateChart ? dataPoint.cycling / 1609.34 : 0),
+                            width: .ratio(0.6)
+                        )
+                        .foregroundStyle(colors.cycling.gradient)
+                        .position(by: .value("Activity", "Cycling"))
+                    }
                 }
-            }
-            .chartXAxis {
-                AxisMarks(preset: .aligned)
-            }
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if let distance = value.as(Double.self) {
-                            Text("\(distance, specifier: "%.1f") mi")
-                                .font(.caption)
+                .chartXAxis {
+                    AxisMarks(preset: .aligned)
+                }
+                .chartYAxis {
+                    AxisMarks { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if let distance = value.as(Double.self) {
+                                Text("\(distance, specifier: "%.1f") mi")
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
-            }
-            .chartLegend(position: .bottom)
-            .chartYScale(domain: .automatic(includesZero: true))
-            .onAppear {
-                withAnimation(.easeOut(duration: 1.0)) {
-                    animateChart = true
+                .chartLegend(position: .bottom)
+                .chartYScale(domain: .automatic(includesZero: true))
+                .padding(.horizontal)
+                .frame(minWidth: CGFloat(chartData.count) * 60)
+                .onAppear {
+                    withAnimation(.easeOut(duration: 1.0)) {
+                        animateChart = true
+                    }
                 }
             }
         }
