@@ -1,7 +1,7 @@
-import SwiftUI
+import Charts
 import HealthKit // For HKWorkoutActivityType
 import MapKit // For MKPolyline, if ever needed here, though unlikely for pure stats
-import Charts
+import SwiftUI
 
 struct StatsView: View {
     @ObservedObject var healthKitManager: HealthKitManager
@@ -12,18 +12,18 @@ struct StatsView: View {
     @State private var animateOnAppear = false
     @State private var timeframeSelection = 0 // 0 = weekly, 1 = monthly
 
-    // Pre-calculated stats
+    /// Pre-calculated stats
     private let aggregateStats: AggregateStatistics
 
     init(healthKitManager: HealthKitManager) {
         self.healthKitManager = healthKitManager
         self.aggregateStats = AggregateStatistics(routeInfos: healthKitManager.allRouteInfos)
     }
-    
+
     private var currentRouteColors: (walking: Color, running: Color, cycling: Color) {
         RouteColors.colors(for: routeColorTheme)
     }
-    
+
     private var gradientBackground: LinearGradient {
         LinearGradient(
             colors: [
@@ -44,7 +44,7 @@ struct StatsView: View {
                         .padding(.horizontal)
                         .offset(y: animateOnAppear ? 0 : 30)
                         .opacity(animateOnAppear ? 1 : 0)
-                    
+
                     // Activity Distribution Chart
                     VStack(alignment: .leading) {
                         Label("Activity Distribution", systemImage: "chart.pie.fill")
@@ -52,7 +52,7 @@ struct StatsView: View {
                             .foregroundStyle(.indigo)
                             .padding(.horizontal)
                             .padding(.top)
-                        
+
                         ImprovedActivityDistributionChart(
                             walkingDistance: aggregateStats.totalWalkingDistance,
                             runningDistance: aggregateStats.totalRunningDistance,
@@ -67,7 +67,7 @@ struct StatsView: View {
                     .padding(.horizontal)
                     .offset(y: animateOnAppear ? 0 : 30)
                     .opacity(animateOnAppear ? 1 : 0.2)
-                    
+
                     // Time-based Activity Chart
                     VStack(alignment: .leading) {
                         Label("Activity Timeline", systemImage: "chart.xyaxis.line")
@@ -75,14 +75,14 @@ struct StatsView: View {
                             .foregroundStyle(.teal)
                             .padding(.horizontal)
                             .padding(.top)
-                        
+
                         Picker("Timeframe", selection: $timeframeSelection) {
                             Text("Weekly").tag(0)
                             Text("Monthly").tag(1)
                         }
                         .pickerStyle(.segmented)
                         .padding(.horizontal)
-                        
+
                         TimeBasedActivityChart(
                             routeInfos: healthKitManager.allRouteInfos,
                             isMonthly: timeframeSelection == 1,
@@ -96,7 +96,7 @@ struct StatsView: View {
                     .padding(.horizontal)
                     .offset(y: animateOnAppear ? 0 : 30)
                     .opacity(animateOnAppear ? 1 : 0.2)
-                    
+
                     // Personal Records Section
                     PersonalRecordsSection(
                         aggregateStats: aggregateStats,
@@ -104,7 +104,7 @@ struct StatsView: View {
                     )
                     .offset(y: animateOnAppear ? 0 : 30)
                     .opacity(animateOnAppear ? 1 : 0)
-                    
+
                     // Future Features Card
                     FutureFeaturesCard()
                         .padding(.horizontal)
@@ -134,6 +134,7 @@ struct StatsView: View {
 }
 
 // MARK: - Activity Summary Card
+
 struct ActivitySummaryCard: View {
     let aggregateStats: AggregateStatistics
     let colors: (walking: Color, running: Color, cycling: Color)
@@ -153,7 +154,7 @@ struct ActivitySummaryCard: View {
                     .padding(.vertical, 4)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
-            
+
             // Activities Row
             HStack(spacing: 20) {
                 ActivityStatItem(
@@ -162,18 +163,18 @@ struct ActivitySummaryCard: View {
                     title: "Walking",
                     color: colors.walking
                 )
-                
+
                 Divider()
-                
+
                 ActivityStatItem(
-                    icon: "figure.run.circle.fill", 
+                    icon: "figure.run.circle.fill",
                     value: formatDistance(aggregateStats.totalRunningDistance),
                     title: "Running",
                     color: colors.running
                 )
-                
+
                 Divider()
-                
+
                 ActivityStatItem(
                     icon: "figure.outdoor.cycle.circle.fill",
                     value: formatDistance(aggregateStats.totalCyclingDistance),
@@ -187,10 +188,10 @@ struct ActivitySummaryCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
-    
+
     private func formatDistance(_ distanceMeters: Double) -> String {
         let distanceMiles = distanceMeters / 1609.34
-        if distanceMiles < 0.05 && distanceMiles > 0 {
+        if distanceMiles < 0.05, distanceMiles > 0 {
             let distanceFeet = distanceMeters * 3.28084
             return String(format: "%.0f ft", distanceFeet)
         }
@@ -203,17 +204,17 @@ struct ActivityStatItem: View {
     let value: String
     let title: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(color)
-            
+
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
-            
+
             Text(title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -223,6 +224,7 @@ struct ActivityStatItem: View {
 }
 
 // MARK: - Improved Activity Distribution Chart
+
 struct ImprovedActivityDistributionChart: View {
     let walkingDistance: Double
     let runningDistance: Double
@@ -230,7 +232,7 @@ struct ImprovedActivityDistributionChart: View {
     let colors: (walking: Color, running: Color, cycling: Color)
     @State private var selectedActivity: String? = nil
     @State private var animateChart = false
-    
+
     var body: some View {
         VStack {
             if totalDistance > 0 {
@@ -253,7 +255,7 @@ struct ImprovedActivityDistributionChart: View {
                                     .opacity(animateChart ? 1 : 0)
                             }
                         }
-                        
+
                         SectorMark(
                             angle: .value("Running", animateChart ? runningDistance : 0.01),
                             innerRadius: .ratio(0.618),
@@ -270,7 +272,7 @@ struct ImprovedActivityDistributionChart: View {
                                     .opacity(animateChart ? 1 : 0)
                             }
                         }
-                        
+
                         SectorMark(
                             angle: .value("Cycling", animateChart ? cyclingDistance : 0.01),
                             innerRadius: .ratio(0.618),
@@ -290,23 +292,44 @@ struct ImprovedActivityDistributionChart: View {
                     }
                     .chartLegend(position: .bottom, alignment: .center, spacing: 20) {
                         HStack(spacing: 24) {
-                            LegendItem(color: colors.walking, label: "Walking", value: formatDistance(walkingDistance), isSelected: selectedActivity == "Walking", action: { toggleSelection("Walking") })
-                            LegendItem(color: colors.running, label: "Running", value: formatDistance(runningDistance), isSelected: selectedActivity == "Running", action: { toggleSelection("Running") })
-                            LegendItem(color: colors.cycling, label: "Cycling", value: formatDistance(cyclingDistance), isSelected: selectedActivity == "Cycling", action: { toggleSelection("Cycling") })
+                            LegendItem(
+                                color: colors.walking,
+                                label: "Walking",
+                                value: formatDistance(walkingDistance),
+                                isSelected: selectedActivity == "Walking",
+                                action: { toggleSelection("Walking") }
+                            )
+                            LegendItem(
+                                color: colors.running,
+                                label: "Running",
+                                value: formatDistance(runningDistance),
+                                isSelected: selectedActivity == "Running",
+                                action: { toggleSelection("Running") }
+                            )
+                            LegendItem(
+                                color: colors.cycling,
+                                label: "Cycling",
+                                value: formatDistance(cyclingDistance),
+                                isSelected: selectedActivity == "Cycling",
+                                action: { toggleSelection("Cycling") }
+                            )
                         }
                     }
-                    
+
                     // Center text
                     VStack(spacing: 2) {
                         Text(selectedActivity ?? "Total")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        
-                        Text(selectedActivity == nil ? formatDistance(totalDistance) : 
-                            selectedActivity == "Walking" ? formatDistance(walkingDistance) :
-                            selectedActivity == "Running" ? formatDistance(runningDistance) :
-                            formatDistance(cyclingDistance))
-                            .font(.headline.bold())
+
+                        Text(
+                            selectedActivity == nil
+                                ? formatDistance(totalDistance)
+                                : selectedActivity == "Walking" ? formatDistance(walkingDistance) :
+                                selectedActivity == "Running" ? formatDistance(runningDistance) :
+                                formatDistance(cyclingDistance)
+                        )
+                        .font(.headline.bold())
                     }
                 }
                 .padding(.vertical)
@@ -325,7 +348,7 @@ struct ImprovedActivityDistributionChart: View {
             }
         }
     }
-    
+
     private func toggleSelection(_ activity: String) {
         withAnimation(.easeInOut(duration: 0.3)) {
             if selectedActivity == activity {
@@ -335,26 +358,26 @@ struct ImprovedActivityDistributionChart: View {
             }
         }
     }
-    
+
     private var walkingPercent: Double {
         totalDistance > 0 ? walkingDistance / totalDistance : 0
     }
-    
+
     private var runningPercent: Double {
         totalDistance > 0 ? runningDistance / totalDistance : 0
     }
-    
+
     private var cyclingPercent: Double {
         totalDistance > 0 ? cyclingDistance / totalDistance : 0
     }
-    
+
     private var totalDistance: Double {
         walkingDistance + runningDistance + cyclingDistance
     }
-    
+
     private func formatDistance(_ distanceMeters: Double) -> String {
         let distanceMiles = distanceMeters / 1609.34
-        if distanceMiles < 0.05 && distanceMiles > 0 {
+        if distanceMiles < 0.05, distanceMiles > 0 {
             let distanceFeet = distanceMeters * 3.28084
             return String(format: "%.0f ft", distanceFeet)
         }
@@ -368,20 +391,20 @@ struct LegendItem: View {
     let value: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Circle()
                     .fill(color)
                     .frame(width: 10, height: 10)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label)
                         .font(.caption)
                         .foregroundColor(isSelected ? .primary : .secondary)
                         .fontWeight(isSelected ? .bold : .regular)
-                        
+
                     Text(value)
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -397,16 +420,17 @@ struct LegendItem: View {
 }
 
 // MARK: - Time-based Activity Chart
+
 struct TimeBasedActivityChart: View {
     let routeInfos: [RouteInfo]
     let isMonthly: Bool
     let colors: (walking: Color, running: Color, cycling: Color)
     @State private var animateChart = false
-    
+
     private var chartData: [TimeframeData] {
         isMonthly ? monthlyData : weeklyData
     }
-    
+
     private var weeklyData: [TimeframeData] {
         // Get current calendar week number
         let calendar = Calendar.current
@@ -421,27 +445,31 @@ struct TimeBasedActivityChart: View {
 
         for weekOffset in 0..<12 {
             guard let weekStartDate = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: currentDate),
-                  let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekStartDate)) else {
+                  let weekStart = calendar.date(from: calendar.dateComponents(
+                      [.yearForWeekOfYear, .weekOfYear],
+                      from: weekStartDate
+                  ))
+            else {
                 continue
             }
             let weekNumber = calendar.component(.weekOfYear, from: weekStart)
             let yearForWeek = calendar.component(.yearForWeekOfYear, from: weekStart)
             let weekLabel = "W\(weekNumber) '\(yearFormatter.string(from: weekStart))"
-            
+
             let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) ?? Date()
 
             let weekRoutes = routeInfos.filter {
                 $0.date >= weekStart && $0.date < weekEnd
             }
-            
+
             // Calculate distances
             var walkingDistance: Double = 0
             var runningDistance: Double = 0
             var cyclingDistance: Double = 0
-            
+
             for route in weekRoutes {
                 let distance = calculateRouteDistance(route)
-                
+
                 switch route.type {
                 case .walking: walkingDistance += distance
                 case .running: runningDistance += distance
@@ -449,7 +477,7 @@ struct TimeBasedActivityChart: View {
                 default: break
                 }
             }
-            
+
             data.append(TimeframeData(
                 label: weekLabel,
                 walking: walkingDistance,
@@ -457,16 +485,16 @@ struct TimeBasedActivityChart: View {
                 cycling: cyclingDistance
             ))
         }
-        
+
         return data.reversed() // Show oldest to newest
     }
-    
+
     private var monthlyData: [TimeframeData] {
         let calendar = Calendar.current
         let currentDate = Date()
         let currentMonth = calendar.component(.month, from: currentDate)
         let currentYear = calendar.component(.year, from: currentDate)
-        
+
         let monthFormatter = DateFormatter()
         monthFormatter.dateFormat = "MMM"
         let yearFormatter = DateFormatter()
@@ -476,12 +504,14 @@ struct TimeBasedActivityChart: View {
 
         for monthOffset in 0..<12 {
             guard let targetDate = calendar.date(byAdding: .month, value: -monthOffset, to: currentDate),
-                  let monthStartDate = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate)) else {
+                  let monthStartDate = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate))
+            else {
                 continue
             }
-            
-            let monthLabel = "\(monthFormatter.string(from: monthStartDate)) '\(yearFormatter.string(from: monthStartDate))"
-            
+
+            let monthLabel =
+                "\(monthFormatter.string(from: monthStartDate)) '\(yearFormatter.string(from: monthStartDate))"
+
             let monthComponent = calendar.component(.month, from: monthStartDate)
             let yearComponent = calendar.component(.year, from: monthStartDate)
 
@@ -490,15 +520,15 @@ struct TimeBasedActivityChart: View {
                 let routeYear = calendar.component(.year, from: $0.date)
                 return routeMonth == monthComponent && routeYear == yearComponent
             }
-            
+
             // Calculate distances
             var walkingDistance: Double = 0
             var runningDistance: Double = 0
             var cyclingDistance: Double = 0
-            
+
             for route in monthRoutes {
                 let distance = calculateRouteDistance(route)
-                
+
                 switch route.type {
                 case .walking: walkingDistance += distance
                 case .running: runningDistance += distance
@@ -506,7 +536,7 @@ struct TimeBasedActivityChart: View {
                 default: break
                 }
             }
-            
+
             data.append(TimeframeData(
                 label: monthLabel,
                 walking: walkingDistance,
@@ -514,25 +544,25 @@ struct TimeBasedActivityChart: View {
                 cycling: cyclingDistance
             ))
         }
-        
+
         return data.reversed() // Show oldest to newest
     }
-    
+
     private func calculateRouteDistance(_ route: RouteInfo) -> Double {
         let coords = route.polyline.coordinates()
         var distance: Double = 0
-        
+
         if coords.count > 1 {
             for i in 0..<(coords.count - 1) {
                 let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
-                let loc2 = CLLocation(latitude: coords[i+1].latitude, longitude: coords[i+1].longitude)
+                let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                 distance += loc1.distance(from: loc2)
             }
         }
-        
+
         return distance
     }
-    
+
     var body: some View {
         if chartData.isEmpty || (chartData.allSatisfy { $0.walking + $0.running + $0.cycling == 0 }) {
             ContentUnavailableView(
@@ -552,7 +582,7 @@ struct TimeBasedActivityChart: View {
                         )
                         .foregroundStyle(colors.walking.gradient)
                         .position(by: .value("Activity", "Walking"))
-                        
+
                         BarMark(
                             x: .value("Time", dataPoint.label),
                             y: .value("Running", animateChart ? dataPoint.running / 1609.34 : 0),
@@ -560,7 +590,7 @@ struct TimeBasedActivityChart: View {
                         )
                         .foregroundStyle(colors.running.gradient)
                         .position(by: .value("Activity", "Running"))
-                        
+
                         BarMark(
                             x: .value("Time", dataPoint.label),
                             y: .value("Cycling", animateChart ? dataPoint.cycling / 1609.34 : 0),
@@ -608,11 +638,12 @@ struct TimeframeData: Identifiable {
 }
 
 // MARK: - Personal Records Section
+
 struct PersonalRecordsSection: View {
     let aggregateStats: AggregateStatistics
     let colors: (walking: Color, running: Color, cycling: Color)
     @Environment(\.routeColorTheme) private var routeColorTheme
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Section Header
@@ -620,7 +651,7 @@ struct PersonalRecordsSection: View {
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.orange)
                 .padding(.horizontal)
-            
+
             if hasRecords {
                 TabView {
                     if let route = aggregateStats.longestWalkingRoute {
@@ -632,7 +663,7 @@ struct PersonalRecordsSection: View {
                         )
                         .padding(.horizontal)
                     }
-                    
+
                     if let route = aggregateStats.longestRunningRoute {
                         PersonalRecordCard(
                             type: .running,
@@ -642,7 +673,7 @@ struct PersonalRecordsSection: View {
                         )
                         .padding(.horizontal)
                     }
-                    
+
                     if let route = aggregateStats.longestCyclingRoute {
                         PersonalRecordCard(
                             type: .cycling,
@@ -665,11 +696,11 @@ struct PersonalRecordsSection: View {
             }
         }
     }
-    
+
     private var hasRecords: Bool {
         aggregateStats.longestWalkingRoute != nil ||
-        aggregateStats.longestRunningRoute != nil ||
-        aggregateStats.longestCyclingRoute != nil
+            aggregateStats.longestRunningRoute != nil ||
+            aggregateStats.longestCyclingRoute != nil
     }
 }
 
@@ -678,7 +709,7 @@ struct PersonalRecordCard: View {
     let recordType: String
     let route: RouteInfo
     let color: Color
-    
+
     private var typeIcon: String {
         switch type {
         case .walking: "figure.walk.circle.fill"
@@ -687,23 +718,23 @@ struct PersonalRecordCard: View {
         default: "mappin.and.ellipse.circle.fill"
         }
     }
-    
+
     private var routeDistance: Double {
         let coords = route.polyline.coordinates()
         var distance: Double = 0
         if coords.count > 1 {
             for i in 0..<(coords.count - 1) {
                 let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
-                let loc2 = CLLocation(latitude: coords[i+1].latitude, longitude: coords[i+1].longitude)
+                let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                 distance += loc1.distance(from: loc2)
             }
         }
         return distance
     }
-    
+
     private func formatDistance(_ distanceMeters: Double) -> String {
         let distanceMiles = distanceMeters / 1609.34
-        if distanceMiles < 0.05 && distanceMiles > 0 {
+        if distanceMiles < 0.05, distanceMiles > 0 {
             let distanceFeet = distanceMeters * 3.28084
             return String(format: "%.0f ft", distanceFeet)
         }
@@ -716,12 +747,12 @@ struct PersonalRecordCard: View {
                 Image(systemName: typeIcon)
                     .font(.title2)
                     .foregroundStyle(color)
-                
+
                 Text(recordType)
                     .font(.title3.weight(.semibold))
-                
+
                 Spacer()
-                
+
                 Text(formatDistance(routeDistance))
                     .font(.headline.weight(.heavy))
                     .padding(.horizontal, 12)
@@ -730,7 +761,7 @@ struct PersonalRecordCard: View {
                     .foregroundStyle(color)
                     .clipShape(Capsule())
             }
-            
+
             if let name = route.name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text("\"\(name)\"")
                     .font(.headline)
@@ -742,63 +773,64 @@ struct PersonalRecordCard: View {
                     .foregroundStyle(.secondary)
                     .italic()
             }
-            
+
             HStack {
                 Label(route.date.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar.circle.fill")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Material.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+//        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(color.opacity(0.3), lineWidth: 1)
+                .stroke(color.opacity(0.3), lineWidth: 3)
         )
     }
 }
 
 // MARK: - Future Features Card
+
 struct FutureFeaturesCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Coming Soon", systemImage: "sparkles")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.purple)
-            
+
             HStack(spacing: 20) {
                 VStack(spacing: 10) {
                     Image(systemName: "map.fill")
                         .font(.title)
                         .foregroundStyle(.purple.opacity(0.8))
-                    
+
                     Text("Activity Hotspots")
                         .font(.callout.weight(.medium))
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                
+
                 VStack(spacing: 10) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.title)
                         .foregroundStyle(.teal.opacity(0.8))
-                    
+
                     Text("Pace Analytics")
                         .font(.callout.weight(.medium))
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                
+
                 VStack(spacing: 10) {
                     Image(systemName: "flag.checkered")
                         .font(.title)
                         .foregroundStyle(.orange.opacity(0.8))
-                    
+
                     Text("Goal Tracking")
                         .font(.callout.weight(.medium))
                         .multilineTextAlignment(.center)
@@ -829,10 +861,10 @@ struct AggregateStatistics {
         var twd: Double = 0
         var trd: Double = 0
         var tcd: Double = 0
-        
-        var lwr: RouteInfo? = nil
-        var lrr: RouteInfo? = nil
-        var lcr: RouteInfo? = nil
+
+        var lwr: RouteInfo?
+        var lrr: RouteInfo?
+        var lcr: RouteInfo?
 
         for route in routeInfos {
             let coords = route.polyline.coordinates()
@@ -840,15 +872,18 @@ struct AggregateStatistics {
             if coords.count > 1 {
                 for i in 0..<(coords.count - 1) {
                     let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
-                    let loc2 = CLLocation(latitude: coords[i+1].latitude, longitude: coords[i+1].longitude)
+                    let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                     distance += loc1.distance(from: loc2)
                 }
             }
-            
+
             switch route.type {
             case .walking:
                 twd += distance
-                if lwr == nil || distance > (lwr?.polyline.coordinates().reduce((0.0, nil as CLLocationCoordinate2D?)) { (res, coord) -> (Double, CLLocationCoordinate2D?) in
+                if lwr == nil || distance > (lwr?.polyline.coordinates().reduce((
+                    0.0,
+                    nil as CLLocationCoordinate2D?
+                )) { res, coord -> (Double, CLLocationCoordinate2D?) in
                     var cd = res.0
                     if let prevCoord = res.1 {
                         let loc1 = CLLocation(latitude: prevCoord.latitude, longitude: prevCoord.longitude)
@@ -861,7 +896,10 @@ struct AggregateStatistics {
                 }
             case .running:
                 trd += distance
-                if lrr == nil || distance > (lrr?.polyline.coordinates().reduce((0.0, nil as CLLocationCoordinate2D?)) { (res, coord) -> (Double, CLLocationCoordinate2D?) in
+                if lrr == nil || distance > (lrr?.polyline.coordinates().reduce((
+                    0.0,
+                    nil as CLLocationCoordinate2D?
+                )) { res, coord -> (Double, CLLocationCoordinate2D?) in
                     var cd = res.0
                     if let prevCoord = res.1 {
                         let loc1 = CLLocation(latitude: prevCoord.latitude, longitude: prevCoord.longitude)
@@ -874,7 +912,10 @@ struct AggregateStatistics {
                 }
             case .cycling:
                 tcd += distance
-                 if lcr == nil || distance > (lcr?.polyline.coordinates().reduce((0.0, nil as CLLocationCoordinate2D?)) { (res, coord) -> (Double, CLLocationCoordinate2D?) in
+                if lcr == nil || distance > (lcr?.polyline.coordinates().reduce((
+                    0.0,
+                    nil as CLLocationCoordinate2D?
+                )) { res, coord -> (Double, CLLocationCoordinate2D?) in
                     var cd = res.0
                     if let prevCoord = res.1 {
                         let loc1 = CLLocation(latitude: prevCoord.latitude, longitude: prevCoord.longitude)
@@ -889,7 +930,7 @@ struct AggregateStatistics {
                 break
             }
         }
-        
+
         self.totalWalkingDistance = twd
         self.totalRunningDistance = trd
         self.totalCyclingDistance = tcd
@@ -900,14 +941,14 @@ struct AggregateStatistics {
     }
 }
 
-// Helper function for distance formatting
-    private func formatDistance(_ distanceMeters: Double) -> String {
-        let distanceMiles = distanceMeters / 1609.34
-         if distanceMiles < 0.05 && distanceMiles > 0 {
-             let distanceFeet = distanceMeters * 3.28084
-             return String(format: "%.0f ft", distanceFeet)
-        }
-        return String(format: "%.1f mi", distanceMiles)
+/// Helper function for distance formatting
+private func formatDistance(_ distanceMeters: Double) -> String {
+    let distanceMiles = distanceMeters / 1609.34
+    if distanceMiles < 0.05, distanceMiles > 0 {
+        let distanceFeet = distanceMeters * 3.28084
+        return String(format: "%.0f ft", distanceFeet)
+    }
+    return String(format: "%.1f mi", distanceMiles)
 }
 
 extension HealthKitManager { // Helper to get all routes easily
@@ -916,7 +957,7 @@ extension HealthKitManager { // Helper to get all routes easily
     }
 }
 
-// Extension for MKPolyline to calculate its points (needed for distance calculation in Stats)
+/// Extension for MKPolyline to calculate its points (needed for distance calculation in Stats)
 extension MKPolyline {
     func coordinates() -> [CLLocationCoordinate2D] {
         var coords = [CLLocationCoordinate2D](repeating: kCLLocationCoordinate2DInvalid, count: pointCount)
@@ -930,15 +971,15 @@ struct StatsView_Previews: PreviewProvider {
     static var previews: some View {
         // Mock HealthKitManager
         let mockManager = HealthKitManager()
-        
+
         // Create some mock RouteInfo data
         let P1 = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         let P2 = CLLocationCoordinate2D(latitude: 37.7755, longitude: -122.4205)
         let P3 = CLLocationCoordinate2D(latitude: 37.7760, longitude: -122.4220)
-        
+
         let coords1 = [P1, P2, P3].map { MKMapPoint($0) }
         let polyline1 = MKPolyline(points: coords1, count: coords1.count)
-        
+
         let coords2 = [P2, P3].map { MKMapPoint($0) }
         let polyline2 = MKPolyline(points: coords2, count: coords2.count)
 
@@ -947,7 +988,7 @@ struct StatsView_Previews: PreviewProvider {
                 id: UUID(),
                 name: "Morning Stroll",
                 type: .walking,
-                date: Date().addingTimeInterval(-86400*2),
+                date: Date().addingTimeInterval(-86400 * 2),
                 locations: [
                     CLLocation(
                         latitude: P1.latitude,
@@ -958,13 +999,31 @@ struct StatsView_Previews: PreviewProvider {
             )
         ]
         mockManager.runningRouteInfos = [
-            RouteInfo(id: UUID(), name: "Park Run", type: .running, date: Date().addingTimeInterval(-86400), locations: [CLLocation(latitude: P2.latitude, longitude: P2.longitude), CLLocation(latitude: P3.latitude, longitude: P3.longitude)])
+            RouteInfo(
+                id: UUID(),
+                name: "Park Run",
+                type: .running,
+                date: Date().addingTimeInterval(-86400),
+                locations: [
+                    CLLocation(latitude: P2.latitude, longitude: P2.longitude),
+                    CLLocation(latitude: P3.latitude, longitude: P3.longitude)
+                ]
+            )
         ]
-         mockManager.cyclingRouteInfos = []
-
+        mockManager.cyclingRouteInfos = [
+            RouteInfo(
+                id: UUID(),
+                name: "Bike Ride", type: .cycling,
+                date: Date().addingTimeInterval(-86400 * 3),
+                locations: [
+                    CLLocation(latitude: P2.latitude, longitude: P2.longitude),
+                    CLLocation(latitude: P3.latitude, longitude: P3.longitude)
+                ]
+            )
+        ]
 
         return StatsView(healthKitManager: mockManager)
             .environment(\.routeColorTheme, .vibrant)
     }
 }
-#endif 
+#endif
