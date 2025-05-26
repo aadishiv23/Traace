@@ -13,7 +13,6 @@ import os
 
 /// A singleton that manages the Core Data stack and provides an interface for saving/fetching  data.
 final class CoreDataManager {
-
     // MARK: Properties
 
     /// The static shared instance.
@@ -97,7 +96,7 @@ final class CoreDataManager {
     func fetchOrCreateWorkout(from hkWorkout: HKWorkout, in context: NSManagedObjectContext) -> CDWorkout? {
         // pkey
         let workoutId = hkWorkout.uuid.uuidString
-        var resultWorkout: CDWorkout? = nil
+        var resultWorkout: CDWorkout?
 
         context.performAndWait { // ensure ops happen on correct context que
             let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
@@ -120,15 +119,15 @@ final class CoreDataManager {
                     newWorkout.type = String(hkWorkout.workoutActivityType.rawValue)
                     // Check metadata for indoor status
                     newWorkout.isIndoor = (hkWorkout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool) ?? false
-                    
+
                     // Generate a default name based on workout type and date
                     let formatter = DateFormatter()
                     formatter.dateStyle = .medium
                     formatter.timeStyle = .short
-                    
+
                     let dateString = formatter.string(from: hkWorkout.startDate)
                     let activityName: String
-                    
+
                     switch hkWorkout.workoutActivityType {
                     case .walking:
                         activityName = "Walk"
@@ -139,9 +138,9 @@ final class CoreDataManager {
                     default:
                         activityName = "Workout"
                     }
-                    
+
                     newWorkout.name = "\(activityName) on \(dateString)"
-                    
+
                     resultWorkout = newWorkout
                 }
             } catch {
@@ -249,17 +248,17 @@ final class CoreDataManager {
     /// Updates the name of a workout
     func updateWorkoutName(id: String, newName: String, context: NSManagedObjectContext? = nil) {
         let workContext = context ?? mainContext
-        
+
         workContext.performAndWait {
             let fetchRequest: NSFetchRequest<CDWorkout> = CDWorkout.fetchRequest()
             fetchRequest.predicate = NSPredicate(format: "id == %@", id)
             fetchRequest.fetchLimit = 1
-            
+
             do {
                 let results = try workContext.fetch(fetchRequest)
                 if let workout = results.first {
                     workout.name = newName
-                    
+
                     if context == nil {
                         // Only save if using mainContext
                         try workContext.save()

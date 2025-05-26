@@ -7,7 +7,7 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     @State private var animateBackground = false
     @State private var animateForeground = false
-    
+
     // Page content data
     let pages = [
         OnboardingPage(
@@ -33,9 +33,9 @@ struct OnboardingView: View {
             subtitle: "Create beautiful snapshots",
             icon: "square.and.arrow.up",
             description: "Capture stunning map snapshots of your favorite routes to share with friends and on social media"
-        )
+        ),
     ]
-    
+
     var body: some View {
         ZStack {
             // Dynamic background gradient
@@ -43,7 +43,7 @@ struct OnboardingView: View {
                 gradient: Gradient(colors: [
                     colorScheme == .dark ? Color(UIColor.systemBackground) : Color(.systemGray6),
                     colorScheme == .dark ? Color.blue.opacity(animateBackground ? 0.2 : 0.1) : Color.blue.opacity(animateBackground ? 0.1 : 0.05),
-                    colorScheme == .dark ? Color.cyan.opacity(animateBackground ? 0.15 : 0.05) : Color.cyan.opacity(animateBackground ? 0.08 : 0.03)
+                    colorScheme == .dark ? Color.cyan.opacity(animateBackground ? 0.15 : 0.05) : Color.cyan.opacity(animateBackground ? 0.08 : 0.03),
                 ]),
                 startPoint: animateBackground ? .topLeading : .top,
                 endPoint: animateBackground ? .bottomTrailing : .bottom
@@ -51,26 +51,26 @@ struct OnboardingView: View {
             .ignoresSafeArea()
             .animation(.easeInOut(duration: 5).repeatForever(autoreverses: true), value: animateBackground)
             .onAppear { animateBackground = true }
-            
+
             // Floating shapes for enhanced background effect
             ZStack {
                 // Subtle floating shapes
-                ForEach(0..<8) { index in
+                ForEach(0 ..< 8) { _ in
                     FloatingShape(
-                        size: CGFloat.random(in: 100...200),
-                        opacity: Double.random(in: 0.03...0.07),
-                        animationDuration: Double.random(in: 20...35),
-                        xOffset: CGFloat.random(in: -200...200),
-                        yOffset: CGFloat.random(in: -400...400)
+                        size: CGFloat.random(in: 100 ... 200),
+                        opacity: Double.random(in: 0.03 ... 0.07),
+                        animationDuration: Double.random(in: 20 ... 35),
+                        xOffset: CGFloat.random(in: -200 ... 200),
+                        yOffset: CGFloat.random(in: -400 ... 400)
                     )
                 }
             }
             .blendMode(.plusLighter)
-            
+
             VStack(spacing: 0) {
                 // Page content with improved TabView
                 TabView(selection: $currentPage) {
-                    ForEach(0..<pages.count, id: \.self) { index in
+                    ForEach(0 ..< pages.count, id: \.self) { index in
                         pageView(for: pages[index])
                             .padding(.bottom, 30)
                             .padding(.top, 50) // Added top padding for better spacing
@@ -82,14 +82,14 @@ struct OnboardingView: View {
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
                 .frame(height: 500) // Increased height for better spacing
                 .padding(.bottom, 30) // Added bottom padding to fix clipping with page indicators
-                
+
                 Spacer()
-                
+
                 // Progress and action buttons
                 VStack(spacing: 25) {
                     // Page indicator dots (custom implementation for better animation control)
                     HStack(spacing: 12) {
-                        ForEach(0..<pages.count, id: \.self) { index in
+                        ForEach(0 ..< pages.count, id: \.self) { index in
                             Circle()
                                 .fill(currentPage == index ? Color.blue : Color.gray.opacity(0.3))
                                 .frame(width: currentPage == index ? 10 : 8, height: currentPage == index ? 10 : 8)
@@ -99,7 +99,7 @@ struct OnboardingView: View {
                         }
                     }
                     .padding(.bottom, 5)
-                    
+
                     // Action button with enhanced styling
                     Button(action: {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -116,7 +116,7 @@ struct OnboardingView: View {
                         HStack(spacing: 12) {
                             Text(currentPage < pages.count - 1 ? "Continue" : "Get Started")
                                 .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            
+
                             Image(systemName: currentPage < pages.count - 1 ? "arrow.right" : "checkmark.circle.fill")
                                 .font(.system(size: 16, weight: .semibold))
                                 .contentTransition(.symbolEffect(.replace.downUp))
@@ -131,13 +131,13 @@ struct OnboardingView: View {
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
-                                
+
                                 // Animated overlay for shimmer effect
                                 LinearGradient(
                                     gradient: Gradient(colors: [
                                         Color.white.opacity(0.0),
                                         Color.white.opacity(animateForeground ? 0.1 : 0.0),
-                                        Color.white.opacity(0.0)
+                                        Color.white.opacity(0.0),
                                     ]),
                                     startPoint: animateForeground ? .topLeading : .bottomTrailing,
                                     endPoint: animateForeground ? .bottomTrailing : .topLeading
@@ -156,7 +156,7 @@ struct OnboardingView: View {
                         .padding(.horizontal, 30)
                     }
                     .buttonStyle(ScaleButtonStyle(scaleFactor: 0.97, duration: 0.2, dampingFraction: 0.8))
-                    
+
                     // Skip button for direct access
                     if currentPage < pages.count - 1 {
                         Button(action: {
@@ -181,13 +181,13 @@ struct OnboardingView: View {
             }
             .padding(.top, 20)
         }
-        .onChange(of: currentPage) { oldValue, newValue in
+        .onChange(of: currentPage) { _, _ in
             // Play haptic feedback on page change
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()
         }
     }
-    
+
     @ViewBuilder
     private func pageView(for page: OnboardingPage) -> some View {
         VStack(spacing: 40) {
@@ -199,7 +199,7 @@ struct OnboardingView: View {
                         LinearGradient(
                             gradient: Gradient(colors: [
                                 colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.08),
-                                colorScheme == .dark ? Color.cyan.opacity(0.1) : Color.cyan.opacity(0.05)
+                                colorScheme == .dark ? Color.cyan.opacity(0.1) : Color.cyan.opacity(0.05),
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -207,7 +207,7 @@ struct OnboardingView: View {
                     )
                     .frame(width: 160, height: 160)
                     .shadow(color: Color.blue.opacity(0.1), radius: 8, x: 0, y: 4)
-                
+
                 // Rotating accent circle
                 Circle()
                     .stroke(
@@ -215,7 +215,7 @@ struct OnboardingView: View {
                             gradient: Gradient(colors: [
                                 .blue.opacity(0.3),
                                 .cyan.opacity(0.1),
-                                .blue.opacity(0)
+                                .blue.opacity(0),
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -225,13 +225,13 @@ struct OnboardingView: View {
                     .frame(width: 180, height: 180)
                     .rotationEffect(.degrees(animateForeground ? 360 : 0))
                     .animation(.linear(duration: 20).repeatForever(autoreverses: false), value: animateForeground)
-                
+
                 // Inner circle
                 Circle()
                     .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
                     .frame(width: 120, height: 120)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                
+
                 // Icon with dynamic gradient
                 Image(systemName: page.icon)
                     .font(.system(size: 55, weight: .light))
@@ -244,7 +244,7 @@ struct OnboardingView: View {
                         )
                     )
             }
-            
+
             // Feature title and subtitle with improved typography
             VStack(spacing: 16) {
                 Text(page.title)
@@ -252,14 +252,14 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                     .foregroundColor(.primary)
                     .shadow(color: colorScheme == .dark ? Color.blue.opacity(0.2) : Color.clear, radius: 2, x: 0, y: 0)
-                
+
                 Text(page.subtitle)
                     .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
             }
-            
+
             // Feature description with better readability
             Text(page.description)
                 .font(.system(size: 17, design: .rounded))
@@ -282,9 +282,9 @@ struct FloatingShape: View {
     let animationDuration: Double
     let xOffset: CGFloat
     let yOffset: CGFloat
-    
+
     @State private var animate = false
-    
+
     var body: some View {
         Circle()
             .fill(

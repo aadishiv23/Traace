@@ -12,7 +12,6 @@ import HealthKit
 import MapKit
 
 class HealthKitManager: ObservableObject {
-
     /// Access point for all data manager by Health Kit.
     private let healthStore = HKHealthStore()
 
@@ -96,7 +95,7 @@ class HealthKitManager: ObservableObject {
         }
     }
 
-    func syncData(interval: TimeInterval = 3) {
+    func syncData(interval _: TimeInterval = 3) {
         let lastSyncKey = "lastSyncDate"
         let lastSync = UserDefaults.standard.object(forKey: lastSyncKey) as? Date ?? .distantPast
 
@@ -166,7 +165,7 @@ class HealthKitManager: ObservableObject {
                 UserDefaults.standard.set(Date(), forKey: "lastSyncDate")
 
                 print("[HealthKitManager] syncData() - ✅ Successfully synced \(newWorkouts.count) new workouts.")
-                
+
                 await MainActor.run {
                     self.isLoadingRoutes = false
                 }
@@ -251,7 +250,7 @@ class HealthKitManager: ObservableObject {
     func requestHKPermissions() async {
         let typesToRequest: Set = [
             HKObjectType.workoutType(),
-            HKSeriesType.workoutRoute()
+            HKSeriesType.workoutRoute(),
         ]
         do {
             if HKHealthStore.isHealthDataAvailable() {
@@ -443,13 +442,11 @@ class HealthKitManager: ObservableObject {
         }
         return simplified
     }
-
 }
 
 // MARK: - Filtering
 
 extension HealthKitManager {
-
     func filterRoutesByDate(date: Date?) -> (walking: [MKPolyline], running: [MKPolyline], cycling: [MKPolyline]) {
         guard let date else {
             return (walkingPolylines, runningPolylines, cyclingPolylines)

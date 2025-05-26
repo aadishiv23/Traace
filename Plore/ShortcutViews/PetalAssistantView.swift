@@ -13,16 +13,16 @@ struct PetalAssistantView: View {
     @State private var selectedAction: String?
     @State private var animateGradient = false
     @State private var selectedTab = 0
-    
+
     let sampleEssay = """
     The Impact of Artificial Intelligence on Modern Education
-    
+
     In recent years, artificial intelligence has transformed the educational landscape, 
     offering new possibilities for personalized learning and automated assessment. 
     However, this technological revolution also raises important questions about the 
     role of human teachers and the nature of education itself...
     """
-    
+
     let aiAnalysis = """
     • Strong opening thesis, but could be more specific
     • Good flow between paragraphs
@@ -30,15 +30,15 @@ struct PetalAssistantView: View {
     • Citation needed for AI statistics
     • Conclusion could be strengthened
     """
-    
+
     let suggestedActions = [
         ("✍️ Enhance Thesis", "Strengthen your opening argument"),
         ("📚 Add Citations", "Include academic sources"),
         ("🎯 Expand Examples", "Add real-world cases"),
         ("✨ Check Grammar", "Polish your writing"),
-        ("🎭 Strengthen Conclusion", "End with impact")
+        ("🎭 Strengthen Conclusion", "End with impact"),
     ]
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -61,7 +61,7 @@ struct PetalAssistantView: View {
                         ))
                 }
                 .padding()
-                
+
                 // Essay Canvas
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
@@ -75,7 +75,7 @@ struct PetalAssistantView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 20) {
                         // Writing progress indicators
                         HStack(spacing: 20) {
@@ -83,7 +83,7 @@ struct PetalAssistantView: View {
                             ProgressRing(progress: 0.6, title: "Structure", color: .purple)
                             ProgressRing(progress: 0.9, title: "Grammar", color: .green)
                         }
-                        
+
                         Text(sampleEssay)
                             .lineLimit(isEssayExpanded ? nil : 3)
                     }
@@ -95,13 +95,13 @@ struct PetalAssistantView: View {
                     )
                 }
                 .padding(.horizontal)
-                
+
                 // AI Analysis Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("AI Analysis")
                         .font(.title2)
                         .fontWeight(.bold)
-                    
+
                     TabView(selection: $selectedTab) {
                         // Overview Tab
                         AnalysisCard(title: "Overview", icon: "doc.text.magnifyingglass") {
@@ -115,13 +115,13 @@ struct PetalAssistantView: View {
                             }
                         }
                         .tag(0)
-                        
+
                         // Style Tab
                         AnalysisCard(title: "Style", icon: "paintbrush.pointed") {
                             StyleAnalysisView()
                         }
                         .tag(1)
-                        
+
                         // Structure Tab
                         AnalysisCard(title: "Structure", icon: "square.stack.3d.up") {
                             StructureAnalysisView()
@@ -132,13 +132,13 @@ struct PetalAssistantView: View {
                     .frame(height: 250)
                 }
                 .padding(.horizontal)
-                
+
                 // Suggested Actions
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Recommended Actions")
                         .font(.title2)
                         .fontWeight(.bold)
-                    
+
                     ForEach(suggestedActions, id: \.0) { action, description in
                         ActionButton(
                             title: action,
@@ -172,7 +172,7 @@ struct ProgressRing: View {
     let progress: Double
     let title: String
     let color: Color
-    
+
     var body: some View {
         VStack {
             ZStack {
@@ -199,7 +199,7 @@ struct ActionButton: View {
     let description: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
@@ -219,9 +219,9 @@ struct ActionButton: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.systemBackground))
                     .shadow(color: isSelected ? .blue.opacity(0.3) : .black.opacity(0.1),
-                           radius: isSelected ? 10 : 5,
-                           x: 0,
-                           y: isSelected ? 5 : 2)
+                            radius: isSelected ? 10 : 5,
+                            x: 0,
+                            y: isSelected ? 5 : 2)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -232,13 +232,13 @@ struct AnalysisCard<Content: View>: View {
     let title: String
     let icon: String
     let content: Content
-    
+
     init(title: String, icon: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.icon = icon
         self.content = content()
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -266,7 +266,7 @@ struct StyleAnalysisView: View {
             Text("Writing Style Metrics")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
             HStack {
                 VStack(alignment: .leading) {
                     Text("Tone")
@@ -279,7 +279,7 @@ struct StyleAnalysisView: View {
                         .tint(.green)
                 }
             }
-            
+
             Text("Your writing style is academic and professional, but could be more engaging.")
                 .font(.subheadline)
         }
@@ -292,7 +292,7 @@ struct StructureAnalysisView: View {
             Text("Paragraph Analysis")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
             ForEach(["Introduction", "Body", "Conclusion"], id: \.self) { section in
                 HStack {
                     Text(section)

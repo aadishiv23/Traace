@@ -6,41 +6,41 @@
 //
 
 import Foundation
-import SwiftUI
 import HealthKit.HKWorkoutActivity
+import SwiftUI
 
 /// Constants for activity-related colors throughout the app
-struct ActivityColors {
+enum ActivityColors {
     // MARK: - Standard Colors
-    
+
     /// Standard vibrant colors for activities
-    struct Standard {
+    enum Standard {
         /// Color for walking activities
         static let walking = Color.blue
-        
+
         /// Color for running activities
         static let running = Color.red
-        
+
         /// Color for cycling activities
         static let cycling = Color.green
     }
-    
+
     // MARK: - Map Style Colors
-    
+
     /// Softer, map-friendly colors for activities
-    struct MapStyle {
+    enum MapStyle {
         /// Pastel blue for walking activities
         static let walking = Color(red: 0.65, green: 0.8, blue: 0.95)
-        
+
         /// Soft coral for running activities
         static let running = Color(red: 0.95, green: 0.6, blue: 0.55)
-        
+
         /// Mint green for cycling activities
         static let cycling = Color(red: 0.7, green: 0.9, blue: 0.7)
     }
-    
+
     // MARK: - Helper Methods
-    
+
     /// Returns the appropriate color for a given activity type
     /// - Parameters:
     ///   - type: The activity type
@@ -78,7 +78,7 @@ struct ActivityColors {
 enum ColorStyle {
     /// Vibrant standard colors
     case standard
-    
+
     /// Softer map-friendly colors
     case mapStyle
 }

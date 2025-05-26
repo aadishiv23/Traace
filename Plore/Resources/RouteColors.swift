@@ -18,7 +18,7 @@ enum RouteColorTheme: String, CaseIterable, Codable {
 }
 
 /// Centralized color palette for route polylines
-struct RouteColors {
+enum RouteColors {
     static func colors(for theme: RouteColorTheme) -> (walking: Color, running: Color, cycling: Color) {
         switch theme {
         case .default:
@@ -41,7 +41,7 @@ struct RouteColors {
             )
         }
     }
-    
+
     // Save custom colors to UserDefaults
     static func saveCustomColors(walking: Color, running: Color, cycling: Color) {
         UserDefaults.standard.set(walking.toHex(), forKey: "customWalkingColor")
@@ -75,17 +75,17 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
-    
+
     /// Convert Color to hex string
     func toHex() -> String {
         guard let components = UIColor(self).cgColor.components else {
             return "#000000"
         }
-        
+
         let r = components[0]
         let g = components[1]
         let b = components[2]
-        
+
         return String(
             format: "#%02X%02X%02X",
             Int(r * 255),

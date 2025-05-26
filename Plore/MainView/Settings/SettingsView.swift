@@ -15,9 +15,9 @@ struct SettingsView: View {
     @AppStorage("polylineStyle") private var polylineStyle: PolylineStyle = .standard // Default to standard
 
     @State private var isClearing = false
-    @State private var isSyncing  = false
+    @State private var isSyncing = false
     @State private var showResetAlert = false
-    @State private var statusMessage   = ""
+    @State private var statusMessage = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -37,26 +37,25 @@ struct SettingsView: View {
                         }
                     }
 
-                    Picker(selection: $polylineStyle, label: 
+                    Picker(selection: $polylineStyle, label:
                         HStack {
                             Image(systemName: "scribble.variable")
                                 .foregroundColor(.accentColor)
                             Text("Polyline Style")
+                        }) {
+                            ForEach(PolylineStyle.allCases) { style in
+                                Text(style.displayName).tag(style)
+                            }
                         }
-                    ) {
-                        ForEach(PolylineStyle.allCases) { style in
-                            Text(style.displayName).tag(style)
-                        }
-                    }
-                    .padding(.vertical, 2)
-                    
+                        .padding(.vertical, 2)
+
                     // Polyline style preview
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Preview:")
                             .font(.caption)
                             .foregroundColor(.gray)
                             .padding(.leading, 2)
-                        
+
                         ZStack {
                             // Background line to simulate a map path better
                             RoundedRectangle(cornerRadius: 5)
@@ -90,7 +89,6 @@ struct SettingsView: View {
                         .padding(.bottom, 8)
                     }
                     .padding(.top, 4)
-                    
                 }
 
                 Section(header: Text("Data Management").font(.headline).padding(.leading, -10)) {
@@ -158,7 +156,7 @@ struct SettingsView: View {
                 Button("Reset", role: .destructive) {
                     performReset()
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This will wipe all stored routes and re-sync from HealthKit. This action cannot be undone.")
             }
@@ -166,7 +164,7 @@ struct SettingsView: View {
     }
 
     private func performReset() {
-        isClearing    = true
+        isClearing = true
         statusMessage = ""
         Task {
             await MainActor.run { // Ensure UI updates on main thread
@@ -174,21 +172,21 @@ struct SettingsView: View {
                 healthKitManager.runningRouteInfos = []
                 healthKitManager.cyclingRouteInfos = []
             }
-            
+
             await CoreDataManager.shared.clearAllData()
 
             await MainActor.run { // Ensure UI updates on main thread
                 isClearing = false
-                isSyncing  = true
+                isSyncing = true
             }
-            
+
             await healthKitManager.loadRoutes() // Ensure this re-fetches everything
 
             await MainActor.run { // Ensure UI updates on main thread
                 isSyncing = false
                 statusMessage = "Rebuild complete! 🎉"
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                    if statusMessage == "Rebuild complete! 🎉" { 
+                    if statusMessage == "Rebuild complete! 🎉" {
                         statusMessage = ""
                     }
                 }
@@ -200,14 +198,13 @@ struct SettingsView: View {
 extension RouteColorTheme {
     var previewColor: Color {
         let colors = RouteColors.colors(for: self)
-        return colors.running 
+        return colors.running
     }
 }
 
-
 #Preview {
     SettingsView(
-        healthKitManager: HealthKitManager(), 
+        healthKitManager: HealthKitManager(),
         selectedTheme: .constant(.vibrant)
     )
 }

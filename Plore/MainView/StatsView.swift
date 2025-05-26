@@ -17,7 +17,7 @@ struct StatsView: View {
 
     init(healthKitManager: HealthKitManager) {
         self.healthKitManager = healthKitManager
-        self.aggregateStats = AggregateStatistics(routeInfos: healthKitManager.allRouteInfos)
+        aggregateStats = AggregateStatistics(routeInfos: healthKitManager.allRouteInfos)
     }
 
     private var currentRouteColors: (walking: Color, running: Color, cycling: Color) {
@@ -28,7 +28,7 @@ struct StatsView: View {
         LinearGradient(
             colors: [
                 colorScheme == .dark ? Color.black.opacity(0.7) : Color.white.opacity(0.7),
-                colorScheme == .dark ? Color.black.opacity(0.2) : Color.white.opacity(0.2)
+                colorScheme == .dark ? Color.black.opacity(0.2) : Color.white.opacity(0.2),
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -443,7 +443,7 @@ struct TimeBasedActivityChart: View {
         // Create data for last 4 weeks
         var data: [TimeframeData] = []
 
-        for weekOffset in 0..<12 {
+        for weekOffset in 0 ..< 12 {
             guard let weekStartDate = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: currentDate),
                   let weekStart = calendar.date(from: calendar.dateComponents(
                       [.yearForWeekOfYear, .weekOfYear],
@@ -502,7 +502,7 @@ struct TimeBasedActivityChart: View {
 
         var data: [TimeframeData] = []
 
-        for monthOffset in 0..<12 {
+        for monthOffset in 0 ..< 12 {
             guard let targetDate = calendar.date(byAdding: .month, value: -monthOffset, to: currentDate),
                   let monthStartDate = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate))
             else {
@@ -553,7 +553,7 @@ struct TimeBasedActivityChart: View {
         var distance: Double = 0
 
         if coords.count > 1 {
-            for i in 0..<(coords.count - 1) {
+            for i in 0 ..< (coords.count - 1) {
                 let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
                 let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                 distance += loc1.distance(from: loc2)
@@ -723,7 +723,7 @@ struct PersonalRecordCard: View {
         let coords = route.polyline.coordinates()
         var distance: Double = 0
         if coords.count > 1 {
-            for i in 0..<(coords.count - 1) {
+            for i in 0 ..< (coords.count - 1) {
                 let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
                 let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                 distance += loc1.distance(from: loc2)
@@ -870,7 +870,7 @@ struct AggregateStatistics {
             let coords = route.polyline.coordinates()
             var distance: Double = 0
             if coords.count > 1 {
-                for i in 0..<(coords.count - 1) {
+                for i in 0 ..< (coords.count - 1) {
                     let loc1 = CLLocation(latitude: coords[i].latitude, longitude: coords[i].longitude)
                     let loc2 = CLLocation(latitude: coords[i + 1].latitude, longitude: coords[i + 1].longitude)
                     distance += loc1.distance(from: loc2)
@@ -931,13 +931,13 @@ struct AggregateStatistics {
             }
         }
 
-        self.totalWalkingDistance = twd
-        self.totalRunningDistance = trd
-        self.totalCyclingDistance = tcd
-        self.longestWalkingRoute = lwr
-        self.longestRunningRoute = lrr
-        self.longestCyclingRoute = lcr
-        self.totalRoutes = routeInfos.count
+        totalWalkingDistance = twd
+        totalRunningDistance = trd
+        totalCyclingDistance = tcd
+        longestWalkingRoute = lwr
+        longestRunningRoute = lrr
+        longestCyclingRoute = lcr
+        totalRoutes = routeInfos.count
     }
 }
 
@@ -967,63 +967,63 @@ extension MKPolyline {
 }
 
 #if DEBUG
-struct StatsView_Previews: PreviewProvider {
-    static var previews: some View {
-        // Mock HealthKitManager
-        let mockManager = HealthKitManager()
+    struct StatsView_Previews: PreviewProvider {
+        static var previews: some View {
+            // Mock HealthKitManager
+            let mockManager = HealthKitManager()
 
-        // Create some mock RouteInfo data
-        let P1 = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
-        let P2 = CLLocationCoordinate2D(latitude: 37.7755, longitude: -122.4205)
-        let P3 = CLLocationCoordinate2D(latitude: 37.7760, longitude: -122.4220)
+            // Create some mock RouteInfo data
+            let P1 = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+            let P2 = CLLocationCoordinate2D(latitude: 37.7755, longitude: -122.4205)
+            let P3 = CLLocationCoordinate2D(latitude: 37.7760, longitude: -122.4220)
 
-        let coords1 = [P1, P2, P3].map { MKMapPoint($0) }
-        let polyline1 = MKPolyline(points: coords1, count: coords1.count)
+            let coords1 = [P1, P2, P3].map { MKMapPoint($0) }
+            let polyline1 = MKPolyline(points: coords1, count: coords1.count)
 
-        let coords2 = [P2, P3].map { MKMapPoint($0) }
-        let polyline2 = MKPolyline(points: coords2, count: coords2.count)
+            let coords2 = [P2, P3].map { MKMapPoint($0) }
+            let polyline2 = MKPolyline(points: coords2, count: coords2.count)
 
-        mockManager.walkingRouteInfos = [
-            RouteInfo(
-                id: UUID(),
-                name: "Morning Stroll",
-                type: .walking,
-                date: Date().addingTimeInterval(-86400 * 2),
-                locations: [
-                    CLLocation(
-                        latitude: P1.latitude,
-                        longitude: P1.longitude
-                    ),
-                    CLLocation(latitude: P2.latitude, longitude: P2.longitude)
-                ]
-            )
-        ]
-        mockManager.runningRouteInfos = [
-            RouteInfo(
-                id: UUID(),
-                name: "Park Run",
-                type: .running,
-                date: Date().addingTimeInterval(-86400),
-                locations: [
-                    CLLocation(latitude: P2.latitude, longitude: P2.longitude),
-                    CLLocation(latitude: P3.latitude, longitude: P3.longitude)
-                ]
-            )
-        ]
-        mockManager.cyclingRouteInfos = [
-            RouteInfo(
-                id: UUID(),
-                name: "Bike Ride", type: .cycling,
-                date: Date().addingTimeInterval(-86400 * 3),
-                locations: [
-                    CLLocation(latitude: P2.latitude, longitude: P2.longitude),
-                    CLLocation(latitude: P3.latitude, longitude: P3.longitude)
-                ]
-            )
-        ]
+            mockManager.walkingRouteInfos = [
+                RouteInfo(
+                    id: UUID(),
+                    name: "Morning Stroll",
+                    type: .walking,
+                    date: Date().addingTimeInterval(-86400 * 2),
+                    locations: [
+                        CLLocation(
+                            latitude: P1.latitude,
+                            longitude: P1.longitude
+                        ),
+                        CLLocation(latitude: P2.latitude, longitude: P2.longitude),
+                    ]
+                ),
+            ]
+            mockManager.runningRouteInfos = [
+                RouteInfo(
+                    id: UUID(),
+                    name: "Park Run",
+                    type: .running,
+                    date: Date().addingTimeInterval(-86400),
+                    locations: [
+                        CLLocation(latitude: P2.latitude, longitude: P2.longitude),
+                        CLLocation(latitude: P3.latitude, longitude: P3.longitude),
+                    ]
+                ),
+            ]
+            mockManager.cyclingRouteInfos = [
+                RouteInfo(
+                    id: UUID(),
+                    name: "Bike Ride", type: .cycling,
+                    date: Date().addingTimeInterval(-86400 * 3),
+                    locations: [
+                        CLLocation(latitude: P2.latitude, longitude: P2.longitude),
+                        CLLocation(latitude: P3.latitude, longitude: P3.longitude),
+                    ]
+                ),
+            ]
 
-        return StatsView(healthKitManager: mockManager)
-            .environment(\.routeColorTheme, .vibrant)
+            return StatsView(healthKitManager: mockManager)
+                .environment(\.routeColorTheme, .vibrant)
+        }
     }
-}
 #endif

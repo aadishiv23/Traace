@@ -1,8 +1,8 @@
 import Foundation
+import HealthKit
 import MapKit
 import SwiftUI
 import UIKit
-import HealthKit
 
 // MARK: - Map Snapshot Generator
 
@@ -75,7 +75,7 @@ class MapSnapshotGenerator {
                 context.setLineJoin(.round)
 
                 context.move(to: points[0])
-                for i in 1..<points.count {
+                for i in 1 ..< points.count {
                     context.addLine(to: points[i])
                 }
                 context.strokePath()
@@ -88,7 +88,7 @@ class MapSnapshotGenerator {
                 context.setLineJoin(.round)
 
                 context.move(to: points[0])
-                for i in 1..<points.count {
+                for i in 1 ..< points.count {
                     context.addLine(to: points[i])
                 }
                 context.strokePath()
@@ -116,7 +116,7 @@ class MapSnapshotGenerator {
                 // Optional: Add "S" for start
                 let startAttributes: [NSAttributedString.Key: Any] = [
                     .font: UIFont.systemFont(ofSize: 14, weight: .bold),
-                    .foregroundColor: UIColor.white
+                    .foregroundColor: UIColor.white,
                 ]
 
                 let startText = "S"
@@ -149,7 +149,7 @@ class MapSnapshotGenerator {
                 // Draw flag icon or "F" for finish
                 let finishAttributes: [NSAttributedString.Key: Any] = [
                     .font: UIFont.systemFont(ofSize: 18, weight: .bold),
-                    .foregroundColor: routeColor
+                    .foregroundColor: routeColor,
                 ]
 
                 let finishText = "F"
@@ -176,7 +176,7 @@ class MapSnapshotGenerator {
             let colorSpace = CGColorSpaceCreateDeviceRGB()
             let colors: [CGColor] = [
                 UIColor.black.withAlphaComponent(0.85).cgColor,
-                UIColor.black.withAlphaComponent(0.7).cgColor
+                UIColor.black.withAlphaComponent(0.7).cgColor,
             ]
             let locations: [CGFloat] = [0.0, 1.0]
 
@@ -205,7 +205,7 @@ class MapSnapshotGenerator {
             // Draw large distance number
             let distanceAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 60, weight: .black),
-                .foregroundColor: UIColor.white
+                .foregroundColor: UIColor.white,
             ]
 
             let distanceTextSize = (distanceText as NSString).size(withAttributes: distanceAttributes)
@@ -221,7 +221,7 @@ class MapSnapshotGenerator {
             // Draw "MI" unit next to the number
             let unitAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 30, weight: .heavy),
-                .foregroundColor: routeColor
+                .foregroundColor: routeColor,
             ]
 
             let unitTextSize = (unitText as NSString).size(withAttributes: unitAttributes)
@@ -238,7 +238,7 @@ class MapSnapshotGenerator {
             let routeName = route.name ?? routeTypeName(for: route.type)
             let routeNameAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 24, weight: .bold),
-                .foregroundColor: UIColor.white
+                .foregroundColor: UIColor.white,
             ]
 
             let routeNameRect = CGRect(
@@ -257,7 +257,7 @@ class MapSnapshotGenerator {
 
             let dateAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 18, weight: .medium),
-                .foregroundColor: UIColor.lightGray
+                .foregroundColor: UIColor.lightGray,
             ]
 
             let dateRect = CGRect(
@@ -273,7 +273,7 @@ class MapSnapshotGenerator {
             let logoText = "TRAACE"
             let logoAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 36, weight: .black),
-                .foregroundColor: UIColor.white
+                .foregroundColor: UIColor.white,
             ]
 
             let logoTextSize = (logoText as NSString).size(withAttributes: logoAttributes)
@@ -327,7 +327,7 @@ class MapSnapshotGenerator {
 
         // Calculate total distance
         var totalDistance: CLLocationDistance = 0
-        for i in 0..<(route.locations.count - 1) {
+        for i in 0 ..< (route.locations.count - 1) {
             let current = route.locations[i]
             let next = route.locations[i + 1]
             totalDistance += current.distance(from: next)

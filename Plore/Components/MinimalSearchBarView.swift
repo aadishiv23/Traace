@@ -10,24 +10,24 @@ import SwiftUI
 
 struct MinimalSearchBarView: View {
     // MARK: - Properties
-    
+
     /// The search text binding.
     @Binding var searchText: String
-    
+
     /// The selected date to filter by.
     @Binding var selectedDate: Date?
-    
+
     /// Whether this search bar is interactive.
     @Binding var isInteractive: Bool
-    
+
     /// Action to trigger when the search text or date changes.
     var onFilterChanged: (() -> Void)?
-    
+
     /// Animation states - keeping it but not using for visual shifts
     @State private var isSearchFocused = false
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         HStack(spacing: 8) {
             // Search icon with subtle animation (no scaling)
@@ -35,7 +35,7 @@ struct MinimalSearchBarView: View {
                 .foregroundColor(isSearchFocused ? .gray.opacity(0.8) : .gray.opacity(0.6))
                 .animation(.easeInOut(duration: 0.2), value: isSearchFocused)
                 .padding(.leading, 12)
-            
+
             // Text field with no position-changing animation
             if isInteractive {
                 TextField("Search routes", text: $searchText)
@@ -53,9 +53,9 @@ struct MinimalSearchBarView: View {
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
+
             Spacer()
-            
+
             // Clear search button with improved animation
             if !searchText.isEmpty, isInteractive {
                 Button {
@@ -102,6 +102,7 @@ struct MinimalSearchBarView: View {
 // MARK: - Preview
 
 // MARK: - Previews
+
 #Preview("Light Mode - Typing") {
     MinimalSearchBarPreview(
         searchText: "Running",

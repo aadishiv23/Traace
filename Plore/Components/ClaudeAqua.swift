@@ -13,33 +13,33 @@ public enum ClaudeButtonStyle {
 /// A button with customizable modern styles
 public struct ClaudeButton: View {
     // MARK: - Properties
-    
+
     /// The text to display on the button
     public var text: String
-    
+
     /// The action to perform when the button is tapped
     public var action: () -> Void
-    
+
     /// The primary color of the button
     public var color: ClaudeButtonColor
-    
+
     /// The size of the button
     public var size: ClaudeButtonSize
-    
+
     /// Whether the button has rounded corners
     public var rounded: Bool
-    
+
     /// The icon to display on the button (optional)
     public var icon: Image?
-    
+
     /// The style of the button (modernAqua or glassy3D)
     public var style: ClaudeButtonStyle
-    
+
     @State private var isPressed: Bool = false
     @State private var isHovered: Bool = false
-    
+
     // MARK: - Initializers
-    
+
     /// Creates a new themed button
     /// - Parameters:
     ///   - text: The text to display on the button
@@ -66,9 +66,9 @@ public struct ClaudeButton: View {
         self.style = style
         self.action = action
     }
-    
+
     // MARK: - Body
-    
+
     public var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
@@ -78,7 +78,7 @@ public struct ClaudeButton: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: size.iconSize, height: size.iconSize)
                 }
-                
+
                 Text(text)
                     .font(.system(size: size.fontSize, weight: style == .modernAqua ? .bold : .semibold))
                     .shadow(color: style == .modernAqua ? color.textShadowColor : .clear, radius: 0, x: 0, y: style == .modernAqua ? -1 : 0)
@@ -113,7 +113,7 @@ public struct ClaudeButton: View {
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.5),
-                                            color.glassyBorderColor.opacity(0.2)
+                                            color.glassyBorderColor.opacity(0.2),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -126,7 +126,7 @@ public struct ClaudeButton: View {
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.5),
-                                            color.glassyBorderColor.opacity(0.2)
+                                            color.glassyBorderColor.opacity(0.2),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -180,27 +180,27 @@ public struct ClaudeButton: View {
             self.isHovered = hovering
         }
     }
-    
+
     // MARK: - Background Views
-    
+
     private var modernAquaBackground: some View {
         ZStack {
             // Vibrant main gradient background
             LinearGradient(
                 gradient: Gradient(colors: [
                     isPressed ? color.pressedTopColor : color.topColor,
-                    isPressed ? color.pressedBottomColor : color.bottomColor
+                    isPressed ? color.pressedBottomColor : color.bottomColor,
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
             )
-            
+
             // Enhanced shine effect overlay
             LinearGradient(
                 gradient: Gradient(colors: [
                     Color.white.opacity(isPressed ? 0.3 : 0.8),
                     Color.white.opacity(isPressed ? 0.15 : 0.4),
-                    Color.white.opacity(0)
+                    Color.white.opacity(0),
                 ]),
                 startPoint: .top,
                 endPoint: .center
@@ -212,14 +212,14 @@ public struct ClaudeButton: View {
                     .offset(y: 2)
                     .blur(radius: 3)
             )
-            
+
             // Additional subtle highlight at the bottom edge
             if !isPressed {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color.clear,
                         color.accentColor.opacity(0.3),
-                        color.accentColor.opacity(0.1)
+                        color.accentColor.opacity(0.1),
                     ]),
                     startPoint: .center,
                     endPoint: .bottom
@@ -233,66 +233,66 @@ public struct ClaudeButton: View {
             }
         }
     }
-    
+
     private var glassy3DBackground: some View {
         ZStack {
             // Base blur and color
             color.glassyBaseColor
                 .opacity(isPressed ? 0.6 : 0.3)
                 .blur(radius: 1)
-            
+
             // Glossy gradient overlay
             LinearGradient(
                 gradient: Gradient(colors: [
                     color.glassyHighlightColor.opacity(isPressed ? 0.5 : 0.7),
                     color.glassyBaseColor.opacity(isPressed ? 0.4 : 0.6),
-                    color.glassyDeepColor.opacity(isPressed ? 0.5 : 0.4)
+                    color.glassyDeepColor.opacity(isPressed ? 0.5 : 0.4),
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .opacity(isPressed ? 0.7 : 0.8)
-            
+
             // Top shine
             LinearGradient(
                 gradient: Gradient(colors: [
                     Color.white.opacity(isPressed ? 0.3 : 0.8),
-                    Color.white.opacity(0)
+                    Color.white.opacity(0),
                 ]),
                 startPoint: .topLeading,
                 endPoint: .center
             )
             .opacity(isPressed ? 0.3 : 0.6)
             .blendMode(.overlay)
-            
+
             // Edge highlight
             if isHovered && !isPressed {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         color.glassyHighlightColor.opacity(0.6),
                         color.glassyHighlightColor.opacity(0.2),
-                        Color.clear
+                        Color.clear,
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .blendMode(.overlay)
             }
-            
+
             // Bottom depth
             if !isPressed {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color.clear,
                         color.glassyDeepColor.opacity(0.2),
-                        color.glassyDeepColor.opacity(0.4)
+                        color.glassyDeepColor.opacity(0.4),
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .blendMode(.multiply)
             }
-            
+
             // Ultra-thin inner border for depth
             if rounded {
                 Capsule()
@@ -301,7 +301,7 @@ public struct ClaudeButton: View {
                             colors: [
                                 Color.white.opacity(isPressed ? 0.1 : 0.3),
                                 Color.clear,
-                                color.glassyDeepColor.opacity(isPressed ? 0.1 : 0.2)
+                                color.glassyDeepColor.opacity(isPressed ? 0.1 : 0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -315,7 +315,7 @@ public struct ClaudeButton: View {
                             colors: [
                                 Color.white.opacity(isPressed ? 0.1 : 0.3),
                                 Color.clear,
-                                color.glassyDeepColor.opacity(isPressed ? 0.1 : 0.2)
+                                color.glassyDeepColor.opacity(isPressed ? 0.1 : 0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -345,7 +345,7 @@ public struct ClaudeButtonColor {
     var highlightColor: Color
     var textShadowColor: Color
     var accentColor: Color
-    
+
     // Glassy 3D Colors
     var glassyBaseColor: Color
     var glassyHighlightColor: Color
@@ -353,7 +353,7 @@ public struct ClaudeButtonColor {
     var glassyBorderColor: Color
     var glassyShadowColor: Color
     var glassyTextColor: Color
-    
+
     /// Blue button (default)
     public static let blue = ClaudeButtonColor(
         // Modern Aqua colors
@@ -366,7 +366,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 0.5, green: 0.84, blue: 1),
         textShadowColor: Color(red: 0.03, green: 0.27, blue: 0.54),
         accentColor: Color(red: 0.4, green: 0.7, blue: 1),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.15, green: 0.5, blue: 0.95),
         glassyHighlightColor: Color(red: 0.4, green: 0.75, blue: 1),
@@ -375,7 +375,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.05, green: 0.35, blue: 0.8),
         glassyTextColor: Color.white
     )
-    
+
     /// Green button
     public static let green = ClaudeButtonColor(
         // Modern Aqua colors
@@ -388,7 +388,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 0.6, green: 0.98, blue: 0.7),
         textShadowColor: Color(red: 0.06, green: 0.4, blue: 0.15),
         accentColor: Color(red: 0.4, green: 0.9, blue: 0.5),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.2, green: 0.8, blue: 0.4),
         glassyHighlightColor: Color(red: 0.5, green: 0.95, blue: 0.6),
@@ -397,7 +397,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.1, green: 0.5, blue: 0.25),
         glassyTextColor: Color.white
     )
-    
+
     /// Red button
     public static let red = ClaudeButtonColor(
         // Modern Aqua colors
@@ -410,7 +410,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 1, green: 0.65, blue: 0.7),
         textShadowColor: Color(red: 0.6, green: 0.05, blue: 0.1),
         accentColor: Color(red: 0.95, green: 0.5, blue: 0.55),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.95, green: 0.25, blue: 0.35),
         glassyHighlightColor: Color(red: 1, green: 0.5, blue: 0.55),
@@ -419,7 +419,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.7, green: 0.1, blue: 0.2),
         glassyTextColor: Color.white
     )
-    
+
     /// Purple button
     public static let purple = ClaudeButtonColor(
         // Modern Aqua colors
@@ -432,7 +432,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 0.85, green: 0.65, blue: 0.98),
         textShadowColor: Color(red: 0.35, green: 0.08, blue: 0.5),
         accentColor: Color(red: 0.7, green: 0.5, blue: 0.9),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.65, green: 0.3, blue: 0.9),
         glassyHighlightColor: Color(red: 0.8, green: 0.5, blue: 1),
@@ -441,7 +441,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.45, green: 0.15, blue: 0.7),
         glassyTextColor: Color.white
     )
-    
+
     /// Orange button
     public static let orange = ClaudeButtonColor(
         // Modern Aqua colors
@@ -454,7 +454,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 1, green: 0.75, blue: 0.5),
         textShadowColor: Color(red: 0.6, green: 0.25, blue: 0.05),
         accentColor: Color(red: 0.95, green: 0.65, blue: 0.35),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.95, green: 0.5, blue: 0.2),
         glassyHighlightColor: Color(red: 1, green: 0.65, blue: 0.35),
@@ -463,7 +463,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.8, green: 0.3, blue: 0.1),
         glassyTextColor: Color.white
     )
-    
+
     /// Teal button
     public static let teal = ClaudeButtonColor(
         // Modern Aqua colors
@@ -476,7 +476,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 0.5, green: 0.95, blue: 0.9),
         textShadowColor: Color(red: 0.03, green: 0.35, blue: 0.3),
         accentColor: Color(red: 0.4, green: 0.85, blue: 0.8),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.15, green: 0.75, blue: 0.7),
         glassyHighlightColor: Color(red: 0.4, green: 0.9, blue: 0.85),
@@ -485,7 +485,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.05, green: 0.5, blue: 0.45),
         glassyTextColor: Color.white
     )
-    
+
     /// Pink button
     public static let pink = ClaudeButtonColor(
         // Modern Aqua colors
@@ -498,7 +498,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 1, green: 0.65, blue: 0.85),
         textShadowColor: Color(red: 0.6, green: 0.1, blue: 0.4),
         accentColor: Color(red: 0.95, green: 0.5, blue: 0.7),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.95, green: 0.35, blue: 0.7),
         glassyHighlightColor: Color(red: 1, green: 0.55, blue: 0.8),
@@ -507,7 +507,7 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.8, green: 0.15, blue: 0.5),
         glassyTextColor: Color.white
     )
-    
+
     /// Gray button - modernized
     public static let gray = ClaudeButtonColor(
         // Modern Aqua colors
@@ -520,7 +520,7 @@ public struct ClaudeButtonColor {
         highlightColor: Color(red: 0.8, green: 0.83, blue: 0.87),
         textShadowColor: Color(red: 0.25, green: 0.28, blue: 0.32),
         accentColor: Color(red: 0.7, green: 0.73, blue: 0.77),
-        
+
         // Glassy 3D colors
         glassyBaseColor: Color(red: 0.5, green: 0.53, blue: 0.57),
         glassyHighlightColor: Color(red: 0.7, green: 0.73, blue: 0.77),
@@ -529,15 +529,15 @@ public struct ClaudeButtonColor {
         glassyShadowColor: Color(red: 0.35, green: 0.38, blue: 0.42),
         glassyTextColor: Color.white
     )
-    
+
     /// Create a custom button color
     public static func custom(
         // Base color
-        base: Color,
+        base _: Color,
         // Optional customization factors
-        darkFactor: CGFloat = 0.3,
-        pressedDarkenFactor: CGFloat = 0.2,
-        accentBrightnessFactor: CGFloat = 0.2
+        darkFactor _: CGFloat = 0.3,
+        pressedDarkenFactor _: CGFloat = 0.2,
+        accentBrightnessFactor _: CGFloat = 0.2
     ) -> ClaudeButtonColor {
         // This would extract RGB values and create all the needed color variants
         // Simplified implementation
@@ -553,7 +553,7 @@ public struct ClaudeButtonSize {
     let horizontalPadding: CGFloat
     let fontSize: CGFloat
     let iconSize: CGFloat
-    
+
     /// Small size button
     public static let small = ClaudeButtonSize(
         verticalPadding: 7,
@@ -561,7 +561,7 @@ public struct ClaudeButtonSize {
         fontSize: 12,
         iconSize: 12
     )
-    
+
     /// Medium size button (default)
     public static let medium = ClaudeButtonSize(
         verticalPadding: 12,
@@ -569,7 +569,7 @@ public struct ClaudeButtonSize {
         fontSize: 14,
         iconSize: 16
     )
-    
+
     /// Large size button
     public static let large = ClaudeButtonSize(
         verticalPadding: 16,
@@ -577,7 +577,7 @@ public struct ClaudeButtonSize {
         fontSize: 16,
         iconSize: 20
     )
-    
+
     /// Extra large size button
     public static let xlarge = ClaudeButtonSize(
         verticalPadding: 20,
@@ -585,7 +585,7 @@ public struct ClaudeButtonSize {
         fontSize: 18,
         iconSize: 24
     )
-    
+
     /// Create a custom size button
     public static func custom(vertical: CGFloat, horizontal: CGFloat, font: CGFloat, icon: CGFloat) -> ClaudeButtonSize {
         ClaudeButtonSize(
@@ -595,12 +595,12 @@ public struct ClaudeButtonSize {
             iconSize: icon
         )
     }
-    
+
     /// Create an adaptable size based on container width
     public static func adaptable(minWidth: CGFloat, maxWidth: CGFloat, containerWidth: CGFloat) -> ClaudeButtonSize {
         // Calculate how far along the width range we are (0.0 to 1.0)
         let widthRatio = min(max((containerWidth - minWidth) / (maxWidth - minWidth), 0.0), 1.0)
-        
+
         // Interpolate between small and large sizes
         return ClaudeButtonSize(
             verticalPadding: lerp(start: small.verticalPadding, end: large.verticalPadding, amount: widthRatio),
@@ -609,7 +609,7 @@ public struct ClaudeButtonSize {
             iconSize: lerp(start: small.iconSize, end: large.iconSize, amount: widthRatio)
         )
     }
-    
+
     /// Create an adaptable size based on dynamic type settings
     public static func adaptableForDynamicType(baseSize: ClaudeButtonSize = .medium, dynamicTypeSize: DynamicTypeSize) -> ClaudeButtonSize {
         // Scale factors based on dynamic type size
@@ -632,7 +632,7 @@ public struct ClaudeButtonSize {
         @unknown default:
             scaleFactor = 1.0
         }
-        
+
         return ClaudeButtonSize(
             verticalPadding: baseSize.verticalPadding * scaleFactor,
             horizontalPadding: baseSize.horizontalPadding * scaleFactor,
@@ -640,7 +640,7 @@ public struct ClaudeButtonSize {
             iconSize: baseSize.iconSize * scaleFactor
         )
     }
-    
+
     /// Helper function to linearly interpolate between two values
     private static func lerp(start: CGFloat, end: CGFloat, amount: CGFloat) -> CGFloat {
         return start + (end - start) * amount
@@ -648,7 +648,7 @@ public struct ClaudeButtonSize {
 }
 
 // Extension to make ClaudeButton work with GeometryReader for adaptive sizing
-extension ClaudeButton {
+public extension ClaudeButton {
     /// Creates a new adaptable ClaudeButton that adjusts size based on available width
     /// - Parameters:
     ///   - text: The text to display on the button
@@ -660,7 +660,7 @@ extension ClaudeButton {
     ///   - style: The style of the button (modernAqua or glassy3D)
     ///   - action: The action to perform when the button is tapped
     /// - Returns: A view that wraps the ClaudeButton with adaptive sizing
-    public static func adaptable(
+    static func adaptable(
         _ text: String,
         color: ClaudeButtonColor = .blue,
         minWidth: CGFloat = 300,
@@ -682,7 +682,7 @@ extension ClaudeButton {
             )
         }
     }
-    
+
     /// Creates a new ClaudeButton that adapts to dynamic type settings
     /// - Parameters:
     ///   - text: The text to display on the button
@@ -693,7 +693,7 @@ extension ClaudeButton {
     ///   - style: The style of the button (modernAqua or glassy3D)
     ///   - action: The action to perform when the button is tapped
     /// - Returns: A view that wraps the ClaudeButton with accessibility scaling
-    public static func accessibleSize(
+    static func accessibleSize(
         _ text: String,
         color: ClaudeButtonColor = .blue,
         baseSize: ClaudeButtonSize = .medium,
@@ -720,11 +720,11 @@ extension ClaudeButton {
 struct DynamicTypeReader<Content: View>: View {
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
     let content: (DynamicTypeSize) -> Content
-    
+
     init(@ViewBuilder content: @escaping (DynamicTypeSize) -> Content) {
         self.content = content
     }
-    
+
     var body: some View {
         content(dynamicTypeSize)
     }
@@ -738,7 +738,7 @@ struct Aqua: View {
             Text("Modern Aqua Buttons")
                 .font(.title)
                 .padding(.bottom, 10)
-            
+
             // Different colors with Modern Aqua style
             Group {
                 HStack(spacing: 12) {
@@ -746,21 +746,21 @@ struct Aqua: View {
                     ClaudeButton("Green", color: .green, style: .modernAqua) {}
                     ClaudeButton("Red", color: .red, style: .modernAqua) {}
                 }
-                
+
                 HStack(spacing: 12) {
                     ClaudeButton("Purple", color: .purple, style: .modernAqua) {}
                     ClaudeButton("Orange", color: .orange, style: .modernAqua) {}
                     ClaudeButton("Teal", color: .teal, style: .modernAqua) {}
                 }
             }
-            
+
             Divider()
                 .padding(.vertical, 10)
-            
+
             Text("Glassy 3D Buttons")
                 .font(.title)
                 .padding(.bottom, 10)
-            
+
             // Different colors with Glassy 3D style
             Group {
                 HStack(spacing: 12) {
@@ -768,7 +768,7 @@ struct Aqua: View {
                     ClaudeButton("Green", color: .green, style: .glassy3D) {}
                     ClaudeButton("Red", color: .red, style: .glassy3D) {}
                 }
-                
+
                 HStack(spacing: 12) {
                     ClaudeButton("Purple", color: .purple, style: .modernAqua) {}
                     ClaudeButton("Orange", color: .orange, style: .modernAqua) {}
@@ -785,7 +785,7 @@ struct ClaudeButton_Previews: PreviewProvider {
             Text("Modern Aqua Buttons")
                 .font(.title)
                 .padding(.bottom, 10)
-            
+
             // Different colors with Modern Aqua style
             Group {
                 HStack(spacing: 12) {
@@ -793,21 +793,21 @@ struct ClaudeButton_Previews: PreviewProvider {
                     ClaudeButton("Green", color: .green, style: .modernAqua) {}
                     ClaudeButton("Red", color: .red, style: .modernAqua) {}
                 }
-                
+
                 HStack(spacing: 12) {
                     ClaudeButton("Purple", color: .purple, style: .modernAqua) {}
                     ClaudeButton("Orange", color: .orange, style: .modernAqua) {}
                     ClaudeButton("Teal", color: .teal, style: .modernAqua) {}
                 }
             }
-            
+
             Divider()
                 .padding(.vertical, 10)
-            
+
             Text("Glassy 3D Buttons")
                 .font(.title)
                 .padding(.bottom, 10)
-            
+
             // Different colors with Glassy 3D style
             Group {
                 HStack(spacing: 12) {
@@ -815,7 +815,7 @@ struct ClaudeButton_Previews: PreviewProvider {
                     ClaudeButton("Green", color: .green, style: .glassy3D) {}
                     ClaudeButton("Red", color: .red, style: .glassy3D) {}
                 }
-                
+
                 HStack(spacing: 12) {
                     ClaudeButton("Purple", color: .purple, style: .glassy3D) {}
                     ClaudeButton("Orange", color: .orange, style: .glassy3D) {}

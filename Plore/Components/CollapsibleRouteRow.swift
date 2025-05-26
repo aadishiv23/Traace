@@ -13,6 +13,7 @@ import SwiftUI
 /// A beautifully designed row displaying a route's information with collapsible content.
 struct CollapsibleRouteRow: View {
     // MARK: - Properties
+
     @Environment(\.routeColorTheme) private var routeColorTheme
     let route: RouteInfo
     let isEditing: Bool
@@ -47,11 +48,11 @@ struct CollapsibleRouteRow: View {
                     .transition(
                         .asymmetric(
                             insertion:
-                                .scale(scale: 0.95)
+                            .scale(scale: 0.95)
                                 .combined(with: .opacity)
                                 .combined(with: .offset(y: 5)),
                             removal:
-                                .scale(scale: 0.95)
+                            .scale(scale: 0.95)
                                 .combined(with: .opacity)
                                 .combined(with: .offset(y: 5))
                         )
@@ -96,7 +97,7 @@ struct CollapsibleRouteRow: View {
                         LinearGradient(
                             colors: [
                                 routeTypeColor(for: route.type).opacity(0.8),
-                                routeTypeColor(for: route.type).opacity(0.4)
+                                routeTypeColor(for: route.type).opacity(0.4),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -352,7 +353,7 @@ struct CollapsibleRouteRow: View {
 
         // Calculate total distance
         var totalDistance: CLLocationDistance = 0
-        for i in 0..<(route.locations.count - 1) {
+        for i in 0 ..< (route.locations.count - 1) {
             let current = route.locations[i]
             let next = route.locations[i + 1]
             totalDistance += current.distance(from: next)
@@ -480,7 +481,7 @@ private func generateLocations(count: Int, radiusFactor: Double) -> [CLLocation]
     let center = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194) // San Francisco
     var locations: [CLLocation] = []
 
-    for i in 0..<count {
+    for i in 0 ..< count {
         // Create a spiral pattern
         let angle = Double(i) * 0.1
         let radius = Double(i) * radiusFactor

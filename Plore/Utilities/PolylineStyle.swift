@@ -4,7 +4,7 @@ enum PolylineStyle: String, CaseIterable, Identifiable {
     case standard
     case custom
 
-    var id: String { self.rawValue }
+    var id: String { rawValue }
 
     var displayName: String {
         switch self {
@@ -14,4 +14,4 @@ enum PolylineStyle: String, CaseIterable, Identifiable {
             return "Enhanced"
         }
     }
-} 
+}

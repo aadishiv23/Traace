@@ -61,7 +61,7 @@ struct RouteDetailView: View {
             width: rect.size.width + (padding * 2),
             height: rect.size.height + (padding * 2)
         )
-        self.initialMapRect = paddedRect
+        initialMapRect = paddedRect
         _mapPosition = State(initialValue: .rect(paddedRect))
     }
 
@@ -176,7 +176,6 @@ struct RouteDetailView: View {
         }
     }
 
-
     /// Detail panel with route statistics and actions.
     private var detailPanel: some View {
         VStack(spacing: 0) {
@@ -261,7 +260,7 @@ struct RouteDetailView: View {
                 .font(.headline)
 
             HStack(spacing: 2) {
-                ForEach(0..<30, id: \.self) { _ in
+                ForEach(0 ..< 30, id: \.self) { _ in
                     VStack {
                         Spacer()
                         RoundedRectangle(cornerRadius: 3)
@@ -272,7 +271,7 @@ struct RouteDetailView: View {
                                     endPoint: .bottom
                                 )
                             )
-                            .frame(height: CGFloat(20 + Int.random(in: 5...60)))
+                            .frame(height: CGFloat(20 + Int.random(in: 5 ... 60)))
                     }
                 }
             }
@@ -337,7 +336,7 @@ struct RouteDetailView: View {
     }
 
     // MARK: - Marker Views
-    
+
     /// View for the start marker on the map.
     private var startMarker: some View {
         ZStack {
@@ -371,7 +370,6 @@ struct RouteDetailView: View {
                 .foregroundColor(routeTypeColor(for: route.type))
         }
     }
-
 
     // MARK: - Helper Methods
 
@@ -426,7 +424,7 @@ struct RouteDetailView: View {
             return "0.0"
         }
         var totalDistanceMeters: CLLocationDistance = 0
-        for i in 0..<(route.locations.count - 1) {
+        for i in 0 ..< (route.locations.count - 1) {
             let current = route.locations[i]
             let next = route.locations[i + 1]
             totalDistanceMeters += current.distance(from: next)
@@ -474,7 +472,7 @@ struct MapControlButtonStyling: ViewModifier {
 
 extension View {
     func mapControlButtonStyling() -> some View {
-        self.modifier(MapControlButtonStyling())
+        modifier(MapControlButtonStyling())
     }
 }
 
@@ -495,9 +493,9 @@ struct RouteDetailView_Previews: PreviewProvider {
             CLLocation(latitude: 37.7760, longitude: -122.4220),
             CLLocation(latitude: 37.7770, longitude: -122.4230),
             CLLocation(latitude: 37.7785, longitude: -122.4245),
-            CLLocation(latitude: 37.7790, longitude: -122.4260)
+            CLLocation(latitude: 37.7790, longitude: -122.4260),
         ]
-        
+
         return RouteInfo(
             id: UUID(),
             name: "City Stroll Adventure",

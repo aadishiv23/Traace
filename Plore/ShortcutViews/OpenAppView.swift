@@ -17,15 +17,15 @@ struct AssistantTask: Identifiable {
     let timeframe: String
     let isScheduled: Bool
     let type: TaskType
-    
+
     let suggestedCommands: [String] = [
         "Analyze this task",
         "Generate outline",
         "Create study materials",
         "Set reminders",
-        "Share with study group"
+        "Share with study group",
     ]
-    
+
     enum TaskType: String {
         case research, math, literature, science, writing, study
     }
@@ -36,40 +36,40 @@ struct AssistantTask: Identifiable {
 struct OpenAppView: View {
     @State private var tasks = [
         AssistantTask(title: "Research Paper Analysis",
-             description: "AI will analyze research papers on renewable energy",
-             timeframe: "Scheduled for 3 PM",
-             isScheduled: true,
-             type: .research),
+                      description: "AI will analyze research papers on renewable energy",
+                      timeframe: "Scheduled for 3 PM",
+                      isScheduled: true,
+                      type: .research),
         AssistantTask(title: "Math Problem Solutions",
-             description: "Step-by-step calculus problem solving",
-             timeframe: "Tomorrow",
-             isScheduled: true,
-             type: .math),
+                      description: "Step-by-step calculus problem solving",
+                      timeframe: "Tomorrow",
+                      isScheduled: true,
+                      type: .math),
         AssistantTask(title: "Literature Review",
-             description: "Analysis of Shakespeare's Macbeth",
-             timeframe: "Unplanned",
-             isScheduled: false,
-             type: .literature),
+                      description: "Analysis of Shakespeare's Macbeth",
+                      timeframe: "Unplanned",
+                      isScheduled: false,
+                      type: .literature),
         AssistantTask(title: "Chemistry Lab Report",
-             description: "Help structure and review lab findings",
-             timeframe: "Scheduled for 5 PM",
-             isScheduled: true,
-             type: .science),
+                      description: "Help structure and review lab findings",
+                      timeframe: "Scheduled for 5 PM",
+                      isScheduled: true,
+                      type: .science),
         AssistantTask(title: "Essay Outline",
-             description: "Create detailed outline for history essay",
-             timeframe: "Unplanned",
-             isScheduled: false,
-             type: .writing),
+                      description: "Create detailed outline for history essay",
+                      timeframe: "Unplanned",
+                      isScheduled: false,
+                      type: .writing),
         AssistantTask(title: "Study Guide Creation",
-             description: "Generate comprehensive biology study guide",
-             timeframe: "Next Week",
-             isScheduled: true,
-             type: .study)
+                      description: "Generate comprehensive biology study guide",
+                      timeframe: "Next Week",
+                      isScheduled: true,
+                      type: .study),
     ]
-    
+
     @State private var selectedTask: AssistantTask?
     @State private var showingTaskDetail = false
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -86,7 +86,7 @@ struct OpenAppView: View {
             }
         })
     }
-    
+
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Petal Tasks")
@@ -97,7 +97,7 @@ struct OpenAppView: View {
         }
         .padding(.bottom, 10)
     }
-    
+
     private var tasksView: some View {
         VStack(spacing: 16) {
             ForEach(tasks) { task in
@@ -115,7 +115,7 @@ struct OpenAppView: View {
 
 struct TaskCardView: View {
     let task: AssistantTask
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Icon Column
@@ -127,18 +127,18 @@ struct TaskCardView: View {
                         .foregroundColor(task.isScheduled ? .blue : .gray)
                         .font(.system(size: 24))
                 )
-            
+
             // Content Column
             VStack(alignment: .leading, spacing: 8) {
                 Text(task.title)
                     .font(.system(size: 18, weight: .semibold))
                     .lineLimit(1)
-                
+
                 Text(task.description)
                     .font(.system(size: 14))
                     .foregroundColor(.gray)
                     .lineLimit(2)
-                
+
                 HStack(spacing: 12) {
                     // Time
                     HStack(spacing: 4) {
@@ -148,7 +148,7 @@ struct TaskCardView: View {
                             .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundColor(.gray)
-                    
+
                     // Status Badge
                     if task.isScheduled {
                         Text("Scheduled")
@@ -161,9 +161,9 @@ struct TaskCardView: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Arrow
             Image(systemName: "chevron.right")
                 .foregroundColor(.gray)
@@ -174,7 +174,7 @@ struct TaskCardView: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
     }
-    
+
     private var iconName: String {
         switch task.type {
         case .research: return "book.fill"
@@ -192,7 +192,7 @@ struct TaskCardView: View {
 struct TaskDetailView: View {
     let task: AssistantTask
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -207,11 +207,11 @@ struct TaskDetailView: View {
                                     .foregroundColor(task.isScheduled ? .blue : .gray)
                                     .font(.system(size: 30))
                             )
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
                             Text(task.title)
                                 .font(.system(size: 24, weight: .bold))
-                            
+
                             HStack {
                                 Image(systemName: "circle.fill")
                                     .font(.system(size: 8))
@@ -222,12 +222,12 @@ struct TaskDetailView: View {
                         }
                     }
                     .padding(.top, 8)
-                    
+
                     // Description
                     Text(task.description)
                         .font(.system(size: 16))
                         .foregroundColor(.gray)
-                    
+
                     // Timeframe Card
                     HStack {
                         Image(systemName: "clock.fill")
@@ -238,12 +238,12 @@ struct TaskDetailView: View {
                     .background(Color.blue.opacity(0.1))
                     .foregroundColor(.blue)
                     .cornerRadius(12)
-                    
+
                     // Commands Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Available Commands")
                             .font(.system(size: 20, weight: .bold))
-                        
+
                         ForEach(task.suggestedCommands, id: \.self) { command in
                             Button(action: {}) {
                                 HStack {
@@ -254,12 +254,12 @@ struct TaskDetailView: View {
                                             Image(systemName: "terminal")
                                                 .foregroundColor(.blue)
                                         )
-                                    
+
                                     Text(command)
                                         .font(.system(size: 16))
-                                    
+
                                     Spacer()
-                                    
+
                                     Image(systemName: "chevron.right")
                                         .foregroundColor(.gray)
                                 }
@@ -269,12 +269,12 @@ struct TaskDetailView: View {
                             }
                         }
                     }
-                    
+
                     // Quick Actions
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Quick Actions")
                             .font(.system(size: 20, weight: .bold))
-                        
+
                         HStack(spacing: 12) {
                             PetalActionButton(title: "Share", icon: "square.and.arrow.up")
                             PetalActionButton(title: "Calendar", icon: "calendar")
@@ -296,7 +296,7 @@ struct TaskDetailView: View {
             }
         }
     }
-    
+
     private var iconName: String {
         switch task.type {
         case .research: return "book.fill"
@@ -314,7 +314,7 @@ struct TaskDetailView: View {
 struct PetalActionButton: View {
     let title: String
     let icon: String
-    
+
     var body: some View {
         Button(action: {}) {
             VStack(spacing: 8) {
@@ -326,7 +326,7 @@ struct PetalActionButton: View {
                             .foregroundColor(.blue)
                             .font(.system(size: 20))
                     )
-                
+
                 Text(title)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.primary)

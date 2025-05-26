@@ -137,12 +137,12 @@ struct ContentView: View {
                     destination: SettingsView(
                         healthKitManager: healthKitManager,
                         selectedTheme: routeColorThemeBinding
-                      ).onDisappear {
-                          DispatchQueue.main.async {
-                              showExampleSheet = true
-                          }
-                      }
-                    ,
+                    ).onDisappear {
+                        DispatchQueue.main.async {
+                            showExampleSheet = true
+                        }
+                    },
+
                     isActive: $showSettingsView
                 ) {
                     EmptyView()
@@ -363,8 +363,8 @@ struct ContentView: View {
             // Otherwise show all filtered routes
             else {
                 let visibleRouteCount = (showWalkingRoutes ? filteredWalkingPolylines.count : 0) +
-                                        (showRunningRoutes ? filteredRunningPolylines.count : 0) +
-                                        (showCyclingRoutes ? filteredCyclingPolylines.count : 0)
+                    (showRunningRoutes ? filteredRunningPolylines.count : 0) +
+                    (showCyclingRoutes ? filteredCyclingPolylines.count : 0)
                 let useEnhancedStyle = polylineStyle == .custom && visibleRouteCount < 15 // Threshold for enhanced style
 
                 if showWalkingRoutes {
@@ -415,7 +415,7 @@ struct ContentView: View {
                             // Casing for cycling routes
                             MapPolyline(polyline)
                                 .stroke(Color.black.opacity(0.4), lineWidth: 6) // Casing layer
-                            
+
                             MapPolyline(polyline)
                                 .stroke(
                                     LinearGradient(
@@ -540,7 +540,7 @@ struct ContentView: View {
 
                     Spacer()
                 }
-                
+
                 HStack {
                     Button {
                         showExampleSheet = false
@@ -555,8 +555,7 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                     .padding(.leading, 10)
-                    
-                    
+
                     Spacer()
                 }
             }
@@ -634,7 +633,7 @@ struct ContentView: View {
         .presentationDetents([
             .custom(CompactDetent.self),
             .medium,
-            .custom(OneSmallThanMaxDetent.self)
+            .custom(OneSmallThanMaxDetent.self),
         ])
         .presentationCornerRadius(30)
         .presentationBackgroundInteraction(.enabled)

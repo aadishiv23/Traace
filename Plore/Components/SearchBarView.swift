@@ -7,35 +7,35 @@
 
 import SwiftUI
 
-/// A reusable search bar. The `isInteractive` flag lets us disable typing
-/// in the “compact” version but enable it in the “expanded” overlay.
+// A reusable search bar. The `isInteractive` flag lets us disable typing
+// in the “compact” version but enable it in the “expanded” overlay.
 import SwiftUI
 
 /// An enhanced search bar with date selection functionality.
 struct SearchBarView: View {
     // MARK: - Properties
-    
+
     /// The search text binding.
     @Binding var searchText: String
-    
+
     /// The selected date to filter by.
     @Binding var selectedDate: Date?
-    
+
     /// Whether this search bar is interactive.
     let isInteractive: Bool
-    
+
     /// Whether the date picker is showing.
     @State private var isShowingDatePicker = false
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         HStack(spacing: 8) {
             // Search icon and text field
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
                 .padding(.leading, 8)
-            
+
             if isInteractive {
                 TextField("Search routes", text: $searchText)
                     .autocorrectionDisabled()
@@ -45,9 +45,9 @@ struct SearchBarView: View {
                     .foregroundColor(searchText.isEmpty ? .gray : .primary)
                     .padding(.vertical, 10)
             }
-            
+
             Spacer()
-            
+
             // Date filtering
             dateFilterView
         }
@@ -63,9 +63,9 @@ struct SearchBarView: View {
             datePicker
         }
     }
-    
+
     // MARK: - Subviews
-    
+
     /// The date filter view with either a calendar icon or the selected date.
     private var dateFilterView: some View {
         Button {
@@ -79,7 +79,7 @@ struct SearchBarView: View {
                     Text(formattedShortDate(date))
                         .font(.subheadline)
                         .foregroundColor(.primary)
-                    
+
                     // Clear button
                     if isInteractive {
                         Button {
@@ -107,7 +107,7 @@ struct SearchBarView: View {
         }
         .disabled(!isInteractive)
     }
-    
+
     /// The date picker sheet.
     private var datePicker: some View {
         NavigationView {
@@ -122,14 +122,14 @@ struct SearchBarView: View {
                 )
                 .datePickerStyle(.graphical)
                 .padding()
-                
+
                 Button("Clear Date") {
                     selectedDate = nil
                     isShowingDatePicker = false
                 }
                 .foregroundColor(.red)
                 .padding()
-                
+
                 Spacer()
             }
             .navigationTitle("Filter by Date")
@@ -143,9 +143,9 @@ struct SearchBarView: View {
             }
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     /// Formats a date for the filter display.
     private func formattedShortDate(_ date: Date) -> String {
         let formatter = DateFormatter()

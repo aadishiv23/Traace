@@ -26,7 +26,6 @@ struct SheetView: View {
 
     @Environment(\.routeColorTheme) private var routeColorTheme
 
-
     let onOpenAppTap: () -> Void
     let onNoteTap: () -> Void
     let onPetalTap: () -> Void
@@ -34,7 +33,6 @@ struct SheetView: View {
 
     let onRouteSelected: (RouteInfo) -> Void
     let onDateFilterChanged: (() -> Void)?
-
 
     // MARK: - Body
 
@@ -504,7 +502,7 @@ struct SheetView: View {
                             LinearGradient(
                                 gradient: Gradient(colors: [
                                     .white.opacity(isOn.wrappedValue ? 0.25 : 0.15), // Reduced opacity
-                                    .white.opacity(0)
+                                    .white.opacity(0),
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -518,7 +516,7 @@ struct SheetView: View {
                             LinearGradient(
                                 gradient: Gradient(colors: [
                                     color.opacity(isOn.wrappedValue ? 0.3 : 0.08), // Reduced opacity
-                                    color.opacity(isOn.wrappedValue ? 0.1 : 0.03) // Reduced opacity
+                                    color.opacity(isOn.wrappedValue ? 0.1 : 0.03), // Reduced opacity
                                 ]),
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

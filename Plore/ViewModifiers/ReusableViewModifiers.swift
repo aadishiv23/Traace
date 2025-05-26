@@ -28,7 +28,7 @@ extension View {
     }
 
     /// Neumorphic effect modifier
-    func neumorphic(isPressed: Bool = false) -> some View {
+    func neumorphic(isPressed _: Bool = false) -> some View {
         shadow(color: Color.black.opacity(0.2), radius: 8, x: 5, y: 5)
             .shadow(color: Color.white.opacity(0.7), radius: 8, x: -5, y: -5)
             .overlay(
@@ -37,7 +37,7 @@ extension View {
                         LinearGradient(
                             colors: [
                                 .white.opacity(0.5),
-                                .black.opacity(0.1)
+                                .black.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing

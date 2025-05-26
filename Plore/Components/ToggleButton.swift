@@ -13,7 +13,7 @@ struct ToggleButton: View {
     let title: String
     let color: Color
     @Binding var isOn: Bool
-    
+
     var body: some View {
         Button(action: {
             isOn.toggle()
@@ -22,7 +22,7 @@ struct ToggleButton: View {
                 Circle()
                     .fill(isOn ? color : Color.gray.opacity(0.3))
                     .frame(width: 12, height: 12)
-                
+
                 Text(title)
                     .font(.caption)
                     .foregroundColor(isOn ? color : .gray)
