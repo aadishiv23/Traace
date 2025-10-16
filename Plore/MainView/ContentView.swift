@@ -503,58 +503,100 @@ struct ContentView: View {
             VStack(spacing: 8) {
                 // 1) The three route toggles
                 HStack {
-                    VStack(spacing: 0) {
-                        let colors = RouteColors.colors(for: routeColorTheme)
-                        routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: colors.running)
-                        Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                        routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: colors.cycling)
-                        Divider().frame(width: 44).background(Color.gray.opacity(0.6))
-                        routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: colors.walking)
+                    if #available(iOS 26.0, *) {
+                        VStack(spacing: 8) {
+                            let colors = RouteColors.colors(for: routeColorTheme)
+                            routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: colors.running)
+                            routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: colors.cycling)
+                            routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: colors.walking)
+                        }
+                        .frame(width: 50)
+                        .glassEffect()
+                        .padding(.leading, 10)
+                    } else {
+                        // Fallback on earlier versions
+                        VStack(spacing: 8) {
+                            let colors = RouteColors.colors(for: routeColorTheme)
+                            routeToggleButton(icon: "figure.run", isOn: $showRunningRoutes, color: colors.running)
+                            routeToggleButton(icon: "figure.outdoor.cycle", isOn: $showCyclingRoutes, color: colors.cycling)
+                            routeToggleButton(icon: "figure.walk", isOn: $showWalkingRoutes, color: colors.walking)
+                        }
+                        .frame(width: 50)
+                        .padding(.leading, 10)
+
+                        Spacer()
                     }
-                    .frame(width: 50)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(radius: 5)
-                    .padding(.leading, 10)
 
                     Spacer()
                 }
 
                 // 2) The settings button, right below the walk toggle
                 HStack {
-                    Button {
-                        // Dismiss the sheet first
-                        showExampleSheet = false
-                        // Then navigate
-                        showSettingsView = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.system(size: 22, weight: .semibold))
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.accentColor)
+                    if #available(iOS 26.0, *) {
+                        Button {
+                            // Dismiss the sheet first
+                            showExampleSheet = false
+                            // Then navigate
+                            showSettingsView = true
+                        } label: {
+                            Image(systemName: "gear")
+                                .font(.system(size: 22, weight: .semibold))
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(.accentColor)
+                        }
+                        .glassEffect()
+                        .shadow(radius: 5)
+                        .padding(.leading, 10)
+                    } else {
+                        Button {
+                            // Dismiss the sheet first
+                            showExampleSheet = false
+                            // Then navigate
+                            showSettingsView = true
+                        } label: {
+                            Image(systemName: "gear")
+                                .font(.system(size: 22, weight: .semibold))
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(.accentColor)
+                        }
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .shadow(radius: 5)
+                        .padding(.leading, 10)
                     }
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(radius: 5)
-                    .padding(.leading, 10)
 
                     Spacer()
                 }
 
                 HStack {
-                    Button {
-                        showExampleSheet = false
-                        showStatsView = true
-                    } label: {
-                        Image(systemName: "chart.bar.xaxis")
-                            .font(.system(size: 22, weight: .semibold))
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.primary)
+                    if #available(iOS 26.0, *) {
+                        Button {
+                            showExampleSheet = false
+                            showStatsView = true
+                        } label: {
+                            Image(systemName: "chart.bar.xaxis")
+                                .font(.system(size: 22, weight: .semibold))
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(.primary)
+                        }
+                        .glassEffect()
+                        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        .padding(.leading, 10)
+                    } else {
+                        Button {
+                            showExampleSheet = false
+                            showStatsView = true
+                        } label: {
+                            Image(systemName: "chart.bar.xaxis")
+                                .font(.system(size: 22, weight: .semibold))
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(.primary)
+                        }
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        .padding(.leading, 10)
                     }
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-                    .padding(.leading, 10)
 
                     Spacer()
                 }
@@ -596,7 +638,6 @@ struct ContentView: View {
                     .scaleEffect(isActive ? 1.1 : 1.0)
             }
         }
-        .contentShape(Rectangle())
     }
 
     // MARK: Vars
