@@ -73,7 +73,7 @@ struct MinimalSearchBarView: View {
         .padding(10) // Increased overall padding for a more comfortable tap target
         .background(
             // Neutral background with consistent shadow
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Color.gray.opacity(0.2))
                 .shadow(
                     color: .black.opacity(0.1),

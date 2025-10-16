@@ -676,7 +676,6 @@ struct ContentView: View {
             .medium,
             .custom(OneSmallThanMaxDetent.self),
         ])
-        .presentationCornerRadius(30)
         .presentationBackgroundInteraction(.enabled)
         .interactiveDismissDisabled()
     }
